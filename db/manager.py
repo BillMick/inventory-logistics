@@ -1,6 +1,6 @@
 import logging
 import psycopg2
-from db.config import get_connection
+from db.config import connection
 from datetime import datetime
 import os
 
@@ -20,7 +20,7 @@ logging.basicConfig(
 # Auto-generate Product Code
 def generate_product_code():
     try:
-        conn = get_connection()
+        conn = connection()
         with conn:
             with conn.cursor() as cur:
                 cur.execute("SELECT COUNT(*) FROM product;")
@@ -34,10 +34,10 @@ def generate_product_code():
         logging.error(f"Unexpected error in generate_product_code: {e}")
 
 # Insert Product
-def insert_product(name, description="", threshold=3, unit="pcs", category="General", price=0.0):
+def insert_product(name, category, unit = "pcs", price = 0.0, description = "", threshold = 3):
     code = generate_product_code()
     try:
-        conn = get_connection()
+        conn = connection()
         with conn:
             with conn.cursor() as cur:
                 cur.execute("""
@@ -56,7 +56,7 @@ def insert_product(name, description="", threshold=3, unit="pcs", category="Gene
 # Fetch All Products
 def fetch_all_products():
     try:
-        conn = get_connection()
+        conn = connection()
         with conn:
             with conn.cursor() as cur:
                 cur.execute("SELECT * FROM product ORDER BY name;")
@@ -71,7 +71,7 @@ def fetch_all_products():
 # Insert Stock Movement
 def insert_stock_movement(product_id, type_, label, reason, service, quantity):
     try:
-        conn = get_connection()
+        conn = connection()
         with conn:
             with conn.cursor() as cur:
                 cur.execute("""
@@ -91,7 +91,7 @@ def insert_stock_movement(product_id, type_, label, reason, service, quantity):
 # Fetch Stock Movements
 def fetch_stock_movements(product_id=None):
     try:
-        conn = get_connection()
+        conn = connection()
         with conn:
             with conn.cursor() as cur:
                 if product_id:
@@ -105,3 +105,46 @@ def fetch_stock_movements(product_id=None):
         logging.error(f"PostgreSQL error in fetch_stock_movements: {e.pgerror}")
     except Exception as e:
         logging.error(f"Unexpected error in fetch_stock_movements: {e}")
+
+def fetch_all_products_with_stock():
+    try:
+        conn = connection()
+        with conn.cursor() as cur:
+            cur.execute("""
+                SELECT 
+                    p.id,
+                    p.name,
+                    p.code,
+                    p.category,
+                    p.unit,
+                    p.price,
+                    p.threshold,
+                    COALESCE(SUM(CASE WHEN sm.type = 'IN' THEN sm.quantity ELSE 0 END), 0) -
+                    COALESCE(SUM(CASE WHEN sm.type = 'OUT' THEN sm.quantity ELSE 0 END), 0) AS stock,
+                    p.created_at,
+                    p.description
+                FROM product p
+                LEFT JOIN stock_movement sm ON p.id = sm.product_id
+                GROUP BY p.id
+                ORDER BY p.name;
+            """)
+            return cur.fetchall()
+    except Exception as e:
+        logging.error(f"Error fetching products with stock: {e}")
+        return []
+
+def update_product_by_id(product_id, name, code, category, unit, price, description, threshold):
+    conn = connection()
+    with conn:
+        with conn.cursor() as cur:
+            cur.execute("""
+                UPDATE product
+                SET name = %s,
+                    code = %s,
+                    category = %s,
+                    unit = %s,
+                    price = %s,
+                    description = %s,
+                    threshold = %s
+                WHERE id = %s
+            """, (name, code, category, unit, price, description, threshold, product_id))
