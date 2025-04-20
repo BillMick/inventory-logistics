@@ -1,82 +1,107 @@
-from db.config import connection
-from models.models import Product, StockMovement
+import logging
+import psycopg2
+from db.config import get_connection
 from datetime import datetime
+import os
 
-# ---- Helper: Generate Product Code ----
+# Ensure logs directory exists
+os.makedirs("logs", exist_ok=True)
+
+# Logging configuration (shared)
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(levelname)s - %(message)s',
+    handlers=[
+        logging.FileHandler("logs/db_operations.log"),
+        logging.StreamHandler()
+    ]
+)
+
+# Auto-generate Product Code
 def generate_product_code():
-    conn = connection()
-    cur = conn.cursor()
-    cur.execute("SELECT COUNT(*) FROM product;")
-    count = cur.fetchone()[0] + 1
-    code = f"PRD-{str(count).zfill(4)}"
-    cur.close()
-    conn.close()
-    return code
+    try:
+        conn = get_connection()
+        with conn:
+            with conn.cursor() as cur:
+                cur.execute("SELECT COUNT(*) FROM product;")
+                count = cur.fetchone()[0] + 1
+                code = f"PRD-{str(count).zfill(5)}"
+                logging.info(f"Generated product code: {code}")
+                return code
+    except psycopg2.Error as e:
+        logging.error(f"PostgreSQL error in generate_product_code: {e.pgerror}")
+    except Exception as e:
+        logging.error(f"Unexpected error in generate_product_code: {e}")
 
 # Insert Product
-def insert_product(name, description="", threshold=0, unit="pcs"):
+def insert_product(name, description="", threshold=3, unit="pcs", category="General", price=0.0):
     code = generate_product_code()
-    conn = connection()
-    cur = conn.cursor()
+    try:
+        conn = get_connection()
+        with conn:
+            with conn.cursor() as cur:
+                cur.execute("""
+                    INSERT INTO product (name, code, category, unit, price, description, threshold)
+                    VALUES (%s, %s, %s, %s, %s, %s, %s)
+                    RETURNING id;
+                """, (name, code, category, unit, price, description, threshold))
+                product_id = cur.fetchone()[0]
+                logging.info(f"Inserted product '{name}' with ID {product_id} and code {code}")
+                return product_id, code
+    except psycopg2.Error as e:
+        logging.error(f"PostgreSQL error in insert_product: {e.pgerror}")
+    except Exception as e:
+        logging.error(f"Unexpected error in insert_product: {e}")
 
-    cur.execute("""
-        INSERT INTO product (name, code, category, price, description, threshold, unit)
-        VALUES (%s, %s, %s, %f, %s, %s, %s)
-        RETURNING *;
-    """, (name, code, description, threshold, unit))
-
-    row = cur.fetchone()
-    conn.commit()
-    cur.close()
-    conn.close()
-
-    return Product(*row)
+# Fetch All Products
+def fetch_all_products():
+    try:
+        conn = get_connection()
+        with conn:
+            with conn.cursor() as cur:
+                cur.execute("SELECT * FROM product ORDER BY name;")
+                rows = cur.fetchall()
+                logging.info(f"Fetched {len(rows)} products.")
+                return rows
+    except psycopg2.Error as e:
+        logging.error(f"PostgreSQL error in fetch_all_products: {e.pgerror}")
+    except Exception as e:
+        logging.error(f"Unexpected error in fetch_all_products: {e}")
 
 # Insert Stock Movement
 def insert_stock_movement(product_id, type_, label, reason, service, quantity):
-    conn = connection()
-    cur = conn.cursor()
+    try:
+        conn = get_connection()
+        with conn:
+            with conn.cursor() as cur:
+                cur.execute("""
+                    INSERT INTO stock_movement 
+                    (product_id, type, label, reason, service, quantity)
+                    VALUES (%s, %s, %s, %s, %s, %s)
+                    RETURNING id;
+                """, (product_id, type_, label, reason, service, quantity))
+                movement_id = cur.fetchone()[0]
+                logging.info(f"Inserted stock movement ID {movement_id} for product {product_id} ({type_}, {label})")
+                return movement_id
+    except psycopg2.Error as e:
+        logging.error(f"PostgreSQL error in insert_stock_movement: {e.pgerror}")
+    except Exception as e:
+        logging.error(f"Unexpected error in insert_stock_movement: {e}")
 
-    cur.execute("""
-        INSERT INTO stock_movement (product_id, type, label, reason, service, quantity)
-        VALUES (%s, %s, %s, %s, %s, %s)
-        RETURNING *;
-    """, (product_id, type_, label, reason, service, quantity))
-
-    row = cur.fetchone()
-    conn.commit()
-    cur.close()
-    conn.close()
-
-    return StockMovement(*row)
-
-# Fetch All Products
-def get_all_products():
-    conn = connection()
-    cur = conn.cursor()
-
-    cur.execute("SELECT * FROM product ORDER BY name;")
-    rows = cur.fetchall()
-
-    products = [Product(*row) for row in rows]
-
-    cur.close()
-    conn.close()
-    return products
-
-# Fetch Stock Movements (Optionally filter by product)
-def get_stock_movements(product_id=None):
-    conn = connection()
-    cur = conn.cursor()
-
-    if product_id:
-        cur.execute("SELECT * FROM stock_movement WHERE product_id = %s ORDER BY timestamp DESC;", (product_id,))
-    else:
-        cur.execute("SELECT * FROM stock_movement ORDER BY timestamp DESC;")
-
-    rows = cur.fetchall()
-    movements = [StockMovement(*row) for row in rows]
-
-    cur.close()
-    conn.close()
-    return movements
+# Fetch Stock Movements
+def fetch_stock_movements(product_id=None):
+    try:
+        conn = get_connection()
+        with conn:
+            with conn.cursor() as cur:
+                if product_id:
+                    cur.execute("SELECT * FROM stock_movement WHERE product_id = %s ORDER BY timestamp DESC;", (product_id,))
+                else:
+                    cur.execute("SELECT * FROM stock_movement ORDER BY timestamp DESC;")
+                rows = cur.fetchall()
+                logging.info(f"Fetched {len(rows)} stock movements{' for product ' + str(product_id) if product_id else ''}.")
+                return rows
+    except psycopg2.Error as e:
+        logging.error(f"PostgreSQL error in fetch_stock_movements: {e.pgerror}")
+    except Exception as e:
+        logging.error(f"Unexpected error in fetch_stock_movements: {e}")
