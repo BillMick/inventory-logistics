@@ -148,3 +148,22 @@ def update_product_by_id(product_id, name, code, category, unit, price, descript
                     threshold = %s
                 WHERE id = %s
             """, (name, code, category, unit, price, description, threshold, product_id))
+
+def fetch_all_stock_movements():
+    conn = connection()
+    with conn.cursor() as cur:
+        cur.execute("""
+            SELECT 
+                sm.id,
+                p.name AS product,
+                sm.type,
+                sm.label,
+                sm.reason,
+                sm.service,
+                sm.quantity,
+                sm.timestamp
+            FROM stock_movement sm
+            JOIN product p ON p.id = sm.product_id
+            ORDER BY sm.timestamp DESC
+        """)
+        return cur.fetchall()
