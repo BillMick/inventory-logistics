@@ -4,6 +4,7 @@ Python based app to manage inventory and logistics
 # To begin
 ## Database settings
 For this app, we use __postgreSQL__. 
+> Click [here](https://www.tutorialspoint.com/postgresql/index.htm) to read some useful PostgreSQL overviews.
 1. So ensure to have it installed at your convenience (with or not GUI) according to your OS.
 2. Create the database __inventory_logistics__.
     - If you are using terminal on linux OS (debian for example):

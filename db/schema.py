@@ -9,7 +9,7 @@ def create_tables():
             code TEXT UNIQUE NOT NULL,
             category TEXT NOT NULL,
             unit TEXT DEFAULT 'pcs',
-            price FLOAT DEFAULT 0.0
+            price FLOAT DEFAULT 0.0,
             description TEXT,
             threshold INTEGER DEFAULT 3,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
