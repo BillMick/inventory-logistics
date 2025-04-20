@@ -1,4 +1,20 @@
+import logging
 from db.config import connection
+import psycopg2
+import os
+
+# Ensure the logs/ directory exists
+os.makedirs("logs", exist_ok=True)
+
+# Configure logging to write to a file
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(levelname)s - %(message)s',
+    handlers=[
+        logging.FileHandler("logs/db_setup.log"),     # Write to file
+        logging.StreamHandler()                       # Still show in console too
+    ]
+)
 
 def create_tables():
     queries = [
@@ -8,8 +24,8 @@ def create_tables():
             name TEXT NOT NULL,
             code TEXT UNIQUE NOT NULL,
             category TEXT NOT NULL,
-            unit TEXT DEFAULT 'pcs',
-            price FLOAT DEFAULT 0.0,
+            unit TEXT NOT NULL DEFAULT 'pcs',
+            price NUMERIC(10, 2) NOT NULL DEFAULT 0.0,
             description TEXT,
             threshold INTEGER DEFAULT 3,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
@@ -29,10 +45,15 @@ def create_tables():
         """
     ]
     
-    conn = connection()
-    cur = conn.cursor()
-    for q in queries:
-        cur.execute(q)
-    conn.commit()
-    cur.close()
-    conn.close()
+    try:
+        conn = connection()
+        with conn:
+            with conn.cursor() as cur:
+                for q in queries:
+                    cur.execute(q)
+                    logging.info("Executed query successfully.")
+        logging.info("All tables created or verified successfully.")
+    except psycopg2.Error as e:
+        logging.error(f"PostgreSQL error occurred: {e.pgerror}")
+    except Exception as e:
+        logging.error(f"Unexpected error: {e}")
