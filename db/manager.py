@@ -167,3 +167,128 @@ def fetch_all_stock_movements():
             ORDER BY sm.timestamp DESC
         """)
         return cur.fetchall()
+
+from db.config import connection
+from collections import defaultdict
+
+def fetch_product_stats():
+    result = {
+        "total_products": 0,
+        "top_products": {}
+    }
+
+    try:
+        conn = connection()
+        with conn.cursor() as cur:
+            # Total number of products
+            cur.execute("SELECT COUNT(*) FROM product;")
+            result["total_products"] = cur.fetchone()[0]
+
+            # Top products by total stock movement
+            cur.execute("""
+                SELECT p.name, SUM(sm.quantity) AS total_quantity
+                FROM stock_movement sm
+                JOIN product p ON sm.product_id = p.id
+                GROUP BY p.name
+                ORDER BY total_quantity DESC
+                LIMIT 10;
+            """)
+            top_data = cur.fetchall()
+            result["top_products"] = {row[0]: row[1] for row in top_data}
+
+        return result
+    except Exception as e:
+        print("Error fetching product stats:", e)
+        return result
+
+from db.config import connection
+
+def fetch_stock_movement_stats():
+    query = """
+        SELECT
+            COUNT(*) AS total,
+            COUNT(*) FILTER (WHERE type = 'IN') AS total_in,
+            COUNT(*) FILTER (WHERE type = 'OUT') AS total_out
+        FROM stock_movement;
+    """
+
+    conn = connection()
+    with conn:
+        with conn.cursor() as cur:
+            cur.execute(query)
+            result = cur.fetchone()
+            if result:
+                return {
+                    "total": result[0],
+                    "in": result[1],
+                    "out": result[2]
+                }
+    return {"total": 0, "in": 0, "out": 0}
+
+import psycopg2
+from db.config import connection
+
+
+def fetch_bar_chart_data():
+    """
+    Returns data for the BarChartWidget: movement count per day over the past week.
+    """
+    query = """
+        SELECT
+            DATE(timestamp) AS day,
+            COUNT(*) FILTER (WHERE type = 'IN') AS in_count,
+            COUNT(*) FILTER (WHERE type = 'OUT') AS out_count
+        FROM stock_movement
+        WHERE timestamp >= CURRENT_DATE - INTERVAL '6 days'
+        GROUP BY day
+        ORDER BY day;
+    """
+
+    conn = connection()
+    with conn:
+        with conn.cursor() as cur:
+            cur.execute(query)
+            rows = cur.fetchall()
+
+    labels = []
+    in_counts = []
+    out_counts = []
+    for r in rows:
+        labels.append(r[0].strftime("%a"))  # e.g., Mon, Tue...
+        in_counts.append(r[1] or 0)
+        out_counts.append(r[2] or 0)
+
+    return {
+        "labels": labels,
+        "datasets": [
+            {"label": "IN", "data": in_counts, "backgroundColor": "#28a745"},
+            {"label": "OUT", "data": out_counts, "backgroundColor": "#dc3545"},
+        ]
+    }
+
+
+def fetch_pie_chart_data():
+    """
+    Returns data for the PieChartWidget: total quantity IN vs OUT.
+    """
+    query = """
+        SELECT
+            SUM(quantity) FILTER (WHERE type = 'IN') AS in_qty,
+            SUM(quantity) FILTER (WHERE type = 'OUT') AS out_qty
+        FROM stock_movement;
+    """
+
+    conn = connection()
+    with conn:
+        with conn.cursor() as cur:
+            cur.execute(query)
+            result = cur.fetchone()
+
+    in_qty = result[0] or 0
+    out_qty = result[1] or 0
+
+    return {
+        "labels": ["IN", "OUT"],
+        "data": [in_qty, out_qty],
+        "backgroundColor": ["#28a745", "#dc3545"]
+    }
