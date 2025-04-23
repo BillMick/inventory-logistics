@@ -1,9 +1,10 @@
 from PyQt5.QtWidgets import (
-    QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QLabel, QFrame, QStackedWidget, QStyle
+    QWidget, QVBoxLayout, QHBoxLayout, QPushButton, 
+    QLabel, QFrame, QStackedWidget, QStyle, QSizePolicy,
+    QGridLayout
 )
-from PyQt5.QtCore import QPropertyAnimation, QEasingCurve, pyqtProperty
+from PyQt5.QtCore import QPropertyAnimation, QEasingCurve, pyqtProperty, Qt
 from PyQt5.QtGui import QFont, QPainter
-from PyQt5.QtCore import Qt
 from ui.widgets.pie_chart import PieChartWidget
 from ui.widgets.bar_chart import BarChartWidget
 from db.manager import fetch_all_stock_movements, fetch_product_stats
@@ -15,7 +16,7 @@ class FadeStackedWidget(QStackedWidget):
         super().__init__(parent)
         self._opacity = 1.0
         self._animation = QPropertyAnimation(self, b"opacity")
-        self._animation.setDuration(2000)  # smoother, faster
+        self._animation.setDuration(600)
         self._animation.setEasingCurve(QEasingCurve.InOutQuad)
         self._target_index = None
 
@@ -61,14 +62,16 @@ class MainDashboard(QWidget):
         self.showMaximized()
 
         main_layout = QVBoxLayout()
+        main_layout.setSpacing(15)
 
-        # --- Menu Bar (Always Visible) ---
+        # --- Menu Bar ---
         icons = {
             "Dashboard": self.style().standardIcon(QStyle.SP_ComputerIcon),
             "Movements": self.style().standardIcon(QStyle.SP_FileDialogContentsView),
             "Products": self.style().standardIcon(QStyle.SP_DirIcon),
             "Settings": self.style().standardIcon(QStyle.SP_FileDialogDetailedView),
         }
+
         menu_layout = QHBoxLayout()
         for i, name in enumerate(["Dashboard", "Movements", "Products", "Settings"]):
             btn = QPushButton(icons[name], name)
@@ -86,7 +89,6 @@ class MainDashboard(QWidget):
                     background-color: #1c5980;
                 }
             """)
-
             if name == "Dashboard":
                 btn.clicked.connect(lambda _, idx=0: self.stack.fadeToIndex(idx))
             elif name == "Movements":
@@ -104,55 +106,94 @@ class MainDashboard(QWidget):
         main_layout.addLayout(menu_layout)
         main_layout.addWidget(self.hr())
 
-        # --- Stack Pages (Dashboard, Movements, Products) ---
+        # --- Stack Pages ---
         self.stack = FadeStackedWidget()
 
         # Dashboard Page
         self.dashboard_page = QWidget()
         dashboard_layout = QVBoxLayout()
+        dashboard_layout.setSpacing(15)
 
-        # --- Stats Section ---
-        stats_layout = QHBoxLayout()
-        self.stats_labels = {}
-        for label in ["Total Movements", "IN", "OUT", "Total Products"]:
-            lbl = QLabel(f"{label}: 0")
-            lbl.setFont(QFont("Arial", 12, QFont.Bold))
-            lbl.setStyleSheet("padding: 10px; border: 1px solid #ccc; background-color: #f9f9f9; border-radius: 8px;")
-            self.stats_labels[label] = lbl
-            stats_layout.addWidget(lbl)
+        # --- KPI Section (Now includes Product KPIs too) ---
+        self.kpi_layout = QGridLayout()
+        self.kpi_layout.setSpacing(10)
 
-        dashboard_layout.addLayout(stats_layout)
+        self.total_movements_card = self.create_stat_card("Total Movements", "0", "#007bff")
+        self.in_card = self.create_stat_card("IN", "0", "#28a745")
+        self.out_card = self.create_stat_card("OUT", "0", "#dc3545")
+        self.total_products_card = self.create_stat_card("Total Products", "0", "#17a2b8")
+
+        self.total_stock_card = self.create_stat_card("Total Stock", "0", "#20c997")
+        self.below_threshold_card = self.create_stat_card("Below Threshold", "0", "#ffc107")
+        self.out_of_stock_card = self.create_stat_card("Out of Stock", "0", "#e74c3c")
+
+        # Add all KPI cards to layout
+        cards = [
+            self.total_movements_card, self.in_card, self.out_card, self.total_products_card,
+            self.total_stock_card, self.below_threshold_card, self.out_of_stock_card
+        ]
+
+        for i, card in enumerate(cards):
+            row = i // 4
+            col = i % 4
+            self.kpi_layout.addWidget(card, row, col)
+
+        dashboard_layout.addLayout(self.kpi_layout)
         dashboard_layout.addWidget(self.hr())
+
 
         # --- Charts Section ---
         charts_layout = QHBoxLayout()
         self.movement_chart = PieChartWidget({}, "Stock Movement Distribution")
         self.top_products_chart = BarChartWidget({}, "Top Products")
+
         charts_layout.addWidget(self.movement_chart)
         charts_layout.addWidget(self.top_products_chart)
 
         dashboard_layout.addLayout(charts_layout)
         self.dashboard_page.setLayout(dashboard_layout)
 
-        # Add pages to stack
+        # --- Add Pages to Stack ---
         self.stack.addWidget(self.dashboard_page)            # index 0
         self.stack.addWidget(StockMovementDashboard())       # index 1
         self.stack.addWidget(ProductDashboard())             # index 2
 
-        # Add stack to main layout
         main_layout.addWidget(self.stack)
         self.setLayout(main_layout)
 
-        # Populate dashboard initially
         self.update_dashboard()
-
 
     def hr(self):
         line = QFrame()
         line.setFrameShape(QFrame.HLine)
         line.setFrameShadow(QFrame.Sunken)
-        line.setStyleSheet("color: gray;")
+        line.setStyleSheet("color: #ced4da;")
         return line
+
+    def create_stat_card(self, title, value, color="#007bff"):
+        frame = QFrame()
+        frame.setStyleSheet(f"""
+            QFrame {{
+                background-color: white;
+                border: 1px solid #dee2e6;
+                border-radius: 10px;
+                padding: 10px;
+            }}
+        """)
+        layout = QVBoxLayout()
+        value_label = QLabel(value)
+        value_label.setAlignment(Qt.AlignCenter)
+        value_label.setFont(QFont("Arial", 16, QFont.Bold))
+        value_label.setStyleSheet(f"color: {color};")
+        title_label = QLabel(title)
+        title_label.setAlignment(Qt.AlignCenter)
+        title_label.setStyleSheet("color: #6c757d;")
+        layout.addWidget(value_label)
+        layout.addWidget(title_label)
+        frame.setLayout(layout)
+        frame.value_label = value_label
+        frame.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
+        return frame
 
     def update_dashboard(self):
         movements = fetch_all_stock_movements()
@@ -161,10 +202,20 @@ class MainDashboard(QWidget):
         in_count = sum(1 for m in movements if m[2] == "IN")
         out_count = sum(1 for m in movements if m[2] == "OUT")
 
-        self.stats_labels["Total Movements"].setText(f"Total Movements: {len(movements)}")
-        self.stats_labels["IN"].setText(f"IN: {in_count}")
-        self.stats_labels["OUT"].setText(f"OUT: {out_count}")
-        self.stats_labels["Total Products"].setText(f"Total Products: {stats.get('total_products', 0)}")
+        total_movements = len(movements)
+        total_products = stats.get("total_products", 0)
 
+        # Set movement KPIs
+        self.total_movements_card.value_label.setText(str(len(movements)))
+        self.in_card.value_label.setText(str(in_count))
+        self.out_card.value_label.setText(str(out_count))
+
+        # Set product KPIs
+        self.total_products_card.value_label.setText(str(stats.get("total_products", 0)))
+        self.total_stock_card.value_label.setText(str(stats.get("total_stock", 0)))
+        self.below_threshold_card.value_label.setText(str(stats.get("below_threshold", 0)))
+        self.out_of_stock_card.value_label.setText(str(stats.get("out_of_stock", 0)))
+
+        # Update charts
         self.movement_chart.plot({"IN": in_count, "OUT": out_count}, "Stock Movement Distribution")
         self.top_products_chart.plot(stats.get("top_products", {}), "Top Products")
