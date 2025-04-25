@@ -8,9 +8,9 @@ from PyQt5.QtGui import QFont, QPainter
 from ui.widgets.pie_chart import PieChartWidget
 from ui.widgets.bar_chart import BarChartWidget
 from db.manager import fetch_all_stock_movements, fetch_product_stats
-from ui.product_dashboard import ProductDashboard
-from ui.stock_movement_dashboard import StockMovementDashboard
-from ui.user_dashboard import UserDashboard
+from ui.product.dashboard_product import ProductDashboard
+from ui.stock_movement.dashboard_stock_movement import StockMovementDashboard
+from ui.user.dashboard_user import UserDashboard
 
 class FadeStackedWidget(QStackedWidget):
     def __init__(self, parent=None):

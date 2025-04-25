@@ -148,7 +148,7 @@ class UserDashboard(QWidget):
 
 
     def add_user(self):
-        from ui.add_user_dialog import AddUserDialog
+        from ui.user.dialog_add_user import AddUserDialog
         dialog = AddUserDialog(self)
         if dialog.exec_():
             self.load_users()

@@ -1,6 +1,6 @@
 from PyQt5.QtWidgets import QApplication
-from ui.product_dashboard import ProductDashboard
-from ui.stock_movement_dashboard import StockMovementDashboard
+from ui.product.dashboard_product import ProductDashboard
+from ui.stock_movement.dashboard_stock_movement import StockMovementDashboard
 from ui.main_interface import MainDashboard
 import sys
 

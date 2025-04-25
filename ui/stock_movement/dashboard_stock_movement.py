@@ -162,7 +162,7 @@ class StockMovementDashboard(QWidget):
         self.last_movement_label.value_label.setText(str(last_movement))
 
     def add_movement(self):
-        from ui.add_movement import AddMovementDialog
+        from ui.stock_movement.dialog_add_movement import AddMovementDialog
         dialog = AddMovementDialog(self)
         if dialog.exec_():
             self.load_movements()

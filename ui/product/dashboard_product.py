@@ -6,7 +6,7 @@ from PyQt5.QtWidgets import (
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QColor, QFont
 from db.manager import fetch_all_products_with_stock
-from ui.add_product_dialog import AddProductDialog
+from ui.product.dialog_add_product import AddProductDialog
 
 
 class ProductDashboard(QWidget):
@@ -169,7 +169,7 @@ class ProductDashboard(QWidget):
             "description": self.table.item(row, 9).text(),
         }
 
-        from ui.update_product import UpdateProductDialog
+        from ui.product.dialog_update_product import UpdateProductDialog
         dialog = UpdateProductDialog(self, product_data)
         if dialog.exec_():
             self.load_products()
