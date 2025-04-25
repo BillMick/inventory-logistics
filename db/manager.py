@@ -34,17 +34,17 @@ def generate_product_code():
         logging.error(f"Unexpected error in generate_product_code: {e}")
 
 # Insert Product
-def insert_product(name, category, unit = "pcs", price = 0.0, description = "", threshold = 3):
+def insert_product(name, category, supplier_id, unit = "pcs", price = 0.0, description = "", threshold = 3):
     code = generate_product_code()
     try:
         conn = connection()
         with conn:
             with conn.cursor() as cur:
                 cur.execute("""
-                    INSERT INTO product (name, code, category, unit, price, description, threshold)
-                    VALUES (%s, %s, %s, %s, %s, %s, %s)
+                    INSERT INTO product (name, code, category, unit, price, description, threshold, supplier_id)
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
                     RETURNING id;
-                """, (name, code, category, unit, price, description, threshold))
+                """, (name, code, category, unit, price, description, threshold, supplier_id))
                 product_id = cur.fetchone()[0]
                 logging.info(f"Inserted product '{name}' with ID {product_id} and code {code}")
                 return product_id, code
@@ -118,20 +118,23 @@ def fetch_all_products_with_stock():
                     p.category,
                     p.unit,
                     p.price,
+                    s.name AS supplier_name,
                     p.threshold,
                     COALESCE(SUM(CASE WHEN sm.type = 'IN' THEN sm.quantity ELSE 0 END), 0) -
                     COALESCE(SUM(CASE WHEN sm.type = 'OUT' THEN sm.quantity ELSE 0 END), 0) AS stock,
                     p.created_at,
                     p.description
                 FROM product p
+                LEFT JOIN supplier s ON p.supplier_id = s.id
                 LEFT JOIN stock_movement sm ON p.id = sm.product_id
-                GROUP BY p.id
+                GROUP BY p.id, s.name
                 ORDER BY p.name;
             """)
             return cur.fetchall()
     except Exception as e:
         logging.error(f"Error fetching products with stock: {e}")
         return []
+
 
 def update_product_by_id(product_id, name, code, category, unit, price, description, threshold):
     conn = connection()
@@ -318,3 +321,16 @@ def insert_user(username, email, password_hash, is_admin=False):
     conn.commit()
     conn.close()
 
+def fetch_all_suppliers():
+    try:
+        conn = connection()
+        with conn:
+            with conn.cursor() as cur:
+                cur.execute("SELECT * FROM supplier ORDER BY name;")
+                rows = cur.fetchall()
+                logging.info(f"Fetched {len(rows)} suppliers.")
+                return rows
+    except psycopg2.Error as e:
+        logging.error(f"PostgreSQL error in fetch_all_suppliers: {e.pgerror}")
+    except Exception as e:
+        logging.error(f"Unexpected error in fetch_all_suppliers: {e}")

@@ -60,9 +60,9 @@ class ProductDashboard(QWidget):
 
         # --- Table Section ---
         self.table = QTableWidget()
-        self.table.setColumnCount(10)
+        self.table.setColumnCount(11)
         self.table.setHorizontalHeaderLabels([
-            "ID", "Name", "Code", "Category", "Unit", "Price", "Threshold", "Stock", "Added at", "Description"
+            "ID", "Name", "Code", "Category", "Unit", "Price", "Supplier", "Threshold", "Stock", "Added at", "Description"
         ])
         self.table.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         self.table.setSortingEnabled(True)
@@ -110,6 +110,7 @@ class ProductDashboard(QWidget):
     def load_products(self):
         self.table.setRowCount(0)
         products = fetch_all_products_with_stock()
+        print(products)
 
         total_stock = 0
         below_threshold = 0
@@ -125,13 +126,13 @@ class ProductDashboard(QWidget):
 
         for row_idx, product in enumerate(filtered_products):
             self.table.insertRow(row_idx)
-            for col_idx in range(10):
+            for col_idx in range(11):
                 item = QTableWidgetItem(str(product[col_idx]))
                 item.setTextAlignment(Qt.AlignCenter)
                 self.table.setItem(row_idx, col_idx, item)
 
-            stock = product[7]
-            threshold = product[6]
+            stock = product[8]
+            threshold = product[7]
             total_stock += stock
 
             if stock <= threshold:
@@ -143,7 +144,7 @@ class ProductDashboard(QWidget):
             else:
                 color = QColor(153, 255, 153)  # Green
 
-            self.table.item(row_idx, 7).setBackground(color)
+            self.table.item(row_idx, 8).setBackground(color)
 
         # --- Update KPI cards ---
         self.total_label.value_label.setText(str(len(filtered_products)))
