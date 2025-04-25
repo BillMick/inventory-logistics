@@ -24,5 +24,6 @@ class BarChartWidget(QWidget):
         self.ax.set_title(title)
         self.ax.set_ylabel("Quantity")
         self.ax.set_xticklabels(products, rotation=45, ha='right')
+        self.ax.grid()
 
         self.canvas.draw()

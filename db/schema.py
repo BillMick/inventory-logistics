@@ -19,6 +19,27 @@ logging.basicConfig(
 def create_tables():
     queries = [
         """
+        CREATE TABLE IF NOT EXISTS users (
+            id SERIAL PRIMARY KEY,
+            username TEXT UNIQUE NOT NULL,
+            email TEXT UNIQUE NOT NULL,
+            password_hash TEXT NOT NULL,
+            is_admin BOOLEAN DEFAULT FALSE,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        );
+        """,
+        """
+        CREATE TABLE IF NOT EXISTS supplier (
+            id SERIAL PRIMARY KEY,
+            name TEXT NOT NULL,
+            fiscal_id TEXT UNIQUE NOT NULL,
+            contact TEXT,
+            email TEXT,
+            address TEXT,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        );
+        """,
+        """
         CREATE TABLE IF NOT EXISTS product (
             id SERIAL PRIMARY KEY,
             name TEXT NOT NULL,
@@ -28,6 +49,7 @@ def create_tables():
             price NUMERIC(10, 2) NOT NULL DEFAULT 0.0,
             description TEXT,
             threshold INTEGER DEFAULT 3,
+            supplier_id INTEGER REFERENCES supplier(id),
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         );
         """,
@@ -44,7 +66,7 @@ def create_tables():
         );
         """
     ]
-    
+
     try:
         conn = connection()
         with conn:
