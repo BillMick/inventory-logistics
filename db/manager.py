@@ -292,3 +292,29 @@ def fetch_pie_chart_data():
         "data": [in_qty, out_qty],
         "backgroundColor": ["#28a745", "#dc3545"]
     }
+
+
+def fetch_all_users():
+    try:
+        conn = connection()
+        with conn:
+            with conn.cursor() as cur:
+                cur.execute("SELECT id, username, email, is_admin, created_at FROM users ORDER BY username;")
+                rows = cur.fetchall()
+                logging.info(f"Fetched {len(rows)} users.")
+                return rows
+    except psycopg2.Error as e:
+        logging.error(f"PostgreSQL error in fetch_all_users: {e.pgerror}")
+    except Exception as e:
+        logging.error(f"Unexpected error in fetch_all_users: {e}")
+        
+def insert_user(username, email, password_hash, is_admin=False):
+    conn = connection()
+    cursor = conn.cursor()
+    cursor.execute("""
+        INSERT INTO users (username, email, password_hash, is_admin)
+        VALUES (%s, %s, %s, %s)
+    """, (username, email, password_hash, is_admin))
+    conn.commit()
+    conn.close()
+

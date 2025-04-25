@@ -10,6 +10,7 @@ from ui.widgets.bar_chart import BarChartWidget
 from db.manager import fetch_all_stock_movements, fetch_product_stats
 from ui.product_dashboard import ProductDashboard
 from ui.stock_movement_dashboard import StockMovementDashboard
+from ui.user_dashboard import UserDashboard
 
 class FadeStackedWidget(QStackedWidget):
     def __init__(self, parent=None):
@@ -69,11 +70,12 @@ class MainDashboard(QWidget):
             "Dashboard": self.style().standardIcon(QStyle.SP_ComputerIcon),
             "Movements": self.style().standardIcon(QStyle.SP_FileDialogContentsView),
             "Products": self.style().standardIcon(QStyle.SP_DirIcon),
-            "Settings": self.style().standardIcon(QStyle.SP_FileDialogDetailedView),
+            "Users": self.style().standardIcon(QStyle.SP_FileDialogDetailedView),
+            "Suppliers": self.style().standardIcon(QStyle.SP_DriveNetIcon),
         }
 
         menu_layout = QHBoxLayout()
-        for i, name in enumerate(["Dashboard", "Movements", "Products", "Settings"]):
+        for i, name in enumerate(["Dashboard", "Movements", "Products", "Users", "Suppliers"]):
             btn = QPushButton(icons[name], name)
             btn.setStyleSheet("""
                 QPushButton {
@@ -95,6 +97,8 @@ class MainDashboard(QWidget):
                 btn.clicked.connect(lambda _, idx=1: self.stack.fadeToIndex(idx))
             elif name == "Products":
                 btn.clicked.connect(lambda _, idx=2: self.stack.fadeToIndex(idx))
+            elif name == "Users":
+                btn.clicked.connect(lambda _, idx=3: self.stack.fadeToIndex(idx))
             menu_layout.addWidget(btn)
 
         menu_layout.addStretch()
@@ -157,6 +161,7 @@ class MainDashboard(QWidget):
         self.stack.addWidget(self.dashboard_page)            # index 0
         self.stack.addWidget(StockMovementDashboard())       # index 1
         self.stack.addWidget(ProductDashboard())             # index 2
+        self.stack.addWidget(UserDashboard())                # index 3
 
         main_layout.addWidget(self.stack)
         self.setLayout(main_layout)
