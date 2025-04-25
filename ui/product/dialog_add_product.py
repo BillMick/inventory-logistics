@@ -4,7 +4,7 @@ from PyQt5.QtWidgets import (
     QDialog, QVBoxLayout, QLineEdit, QTextEdit, QComboBox,
     QSpinBox, QDoubleSpinBox, QPushButton, QLabel, QHBoxLayout, QMessageBox
 )
-from db.manager import insert_product, fetch_all_suppliers
+from db.manager import insert_product, fetch_all_suppliers_id_name
 
 class AddProductDialog(QDialog):
     def __init__(self, parent=None):
@@ -66,7 +66,7 @@ class AddProductDialog(QDialog):
         self.setLayout(layout)
 
     def load_suppliers(self):
-        suppliers = fetch_all_suppliers()  # Should return list of (id, name)
+        suppliers = fetch_all_suppliers_id_name()  # Should return list of (id, name)
         if suppliers:
             for sid, name in suppliers:
                 self.supplier_input.addItem(name, sid)

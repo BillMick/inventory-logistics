@@ -11,6 +11,7 @@ from db.manager import fetch_all_stock_movements, fetch_product_stats
 from ui.product.dashboard_product import ProductDashboard
 from ui.stock_movement.dashboard_stock_movement import StockMovementDashboard
 from ui.user.dashboard_user import UserDashboard
+from ui.supplier.dashboard_supplier import SupplierDashboard
 
 class FadeStackedWidget(QStackedWidget):
     def __init__(self, parent=None):
@@ -99,6 +100,9 @@ class MainDashboard(QWidget):
                 btn.clicked.connect(lambda _, idx=2: self.stack.fadeToIndex(idx))
             elif name == "Users":
                 btn.clicked.connect(lambda _, idx=3: self.stack.fadeToIndex(idx))
+            elif name == "Suppliers":
+                btn.clicked.connect(lambda _, idx=4: self.stack.fadeToIndex(idx))
+                
             menu_layout.addWidget(btn)
 
         menu_layout.addStretch()
@@ -162,6 +166,7 @@ class MainDashboard(QWidget):
         self.stack.addWidget(StockMovementDashboard())       # index 1
         self.stack.addWidget(ProductDashboard())             # index 2
         self.stack.addWidget(UserDashboard())                # index 3
+        self.stack.addWidget(SupplierDashboard())            # index 4
 
         main_layout.addWidget(self.stack)
         self.setLayout(main_layout)

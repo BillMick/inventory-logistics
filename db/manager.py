@@ -321,16 +321,46 @@ def insert_user(username, email, password_hash, is_admin=False):
     conn.commit()
     conn.close()
 
-def fetch_all_suppliers():
+def fetch_all_suppliers_id_name():
     try:
         conn = connection()
         with conn:
             with conn.cursor() as cur:
-                cur.execute("SELECT * FROM supplier ORDER BY name;")
+                cur.execute("SELECT id, name FROM supplier ORDER BY name;")
                 rows = cur.fetchall()
                 logging.info(f"Fetched {len(rows)} suppliers.")
                 return rows
     except psycopg2.Error as e:
-        logging.error(f"PostgreSQL error in fetch_all_suppliers: {e.pgerror}")
+        logging.error(f"PostgreSQL error in fetch_all_suppliers_id_name: {e.pgerror}")
     except Exception as e:
-        logging.error(f"Unexpected error in fetch_all_suppliers: {e}")
+        logging.error(f"Unexpected error in fetch_all_suppliers_id_name: {e}")
+
+def insert_supplier(name, fiscal_id, contact, email, address):
+    conn = connection()
+    cursor = conn.cursor()
+    try:
+        query = """
+            INSERT INTO supplier (name, fiscal_id, contact, email, address)
+            VALUES (%s, %s, %s, %s, %s)
+        """
+        cursor.execute(query, (name, fiscal_id, contact, email, address))
+        conn.commit()
+    except Exception as e:
+        conn.rollback()
+        raise e
+    finally:
+        cursor.close()
+        conn.close()
+        
+def fetch_all_suppliers():
+    conn = connection()
+    cursor = conn.cursor()
+    try:
+        query = "SELECT id, name, fiscal_id, contact, email, address, created_at FROM supplier ORDER BY created_at DESC"
+        cursor.execute(query)
+        return cursor.fetchall()
+    except Exception as e:
+        raise e
+    finally:
+        cursor.close()
+        conn.close()
