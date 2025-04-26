@@ -8,6 +8,7 @@ from PyQt5.QtGui import QColor, QFont
 from db.manager import fetch_all_products_with_stock
 from utils.excel_importer import import_products_from_excel
 from ui.product.dialog_add_product import AddProductDialog
+import pandas as pd
 
 class ProductDashboard(QWidget):
     def __init__(self):
@@ -49,6 +50,10 @@ class ProductDashboard(QWidget):
         btn_import = QPushButton("Import from Excel")
         btn_import.clicked.connect(self.import_products)
         btn_import.setStyleSheet("background-color: #20c997; color: white; font-weight: bold;")
+        
+        btn_export = QPushButton("Export to Excel")
+        btn_export.clicked.connect(self.export_to_excel)
+        btn_export.setStyleSheet("background-color: #28a745; color: white; font-weight: bold;")
 
         btn_refresh = QPushButton("Refresh")
         btn_refresh.clicked.connect(self.load_products)
@@ -58,6 +63,7 @@ class ProductDashboard(QWidget):
         filter_layout.addWidget(self.name_filter)
         filter_layout.addWidget(btn_add)
         filter_layout.addWidget(btn_import)
+        filter_layout.addWidget(btn_export)
         filter_layout.addWidget(btn_refresh)
 
         layout.addLayout(filter_layout)
@@ -189,3 +195,38 @@ class ProductDashboard(QWidget):
         dialog = UpdateProductDialog(self, product_data)
         if dialog.exec_():
             self.load_products()
+
+    def export_to_excel(self):
+        row_count = self.table.rowCount()
+        col_count = self.table.columnCount()
+
+        if row_count == 0:
+            QMessageBox.warning(self, "Export Failed", "No data to export.")
+            return
+
+        # Extract data from QTableWidget
+        data = []
+        headers = [self.table.horizontalHeaderItem(col).text() for col in range(col_count)]
+
+        for row in range(row_count):
+            row_data = []
+            for col in range(col_count):
+                item = self.table.item(row, col)
+                row_data.append(item.text() if item else "")
+            data.append(row_data)
+
+        # Convert to DataFrame
+        df = pd.DataFrame(data, columns=headers)
+
+        # Ask user where to save the file
+        filepath, _ = QFileDialog.getSaveFileName(self, "Save File", "", "Excel Files (*.xlsx)")
+        if filepath:
+            if not filepath.endswith(".xlsx"):
+                filepath += ".xlsx"
+            try:
+                df.to_excel(filepath, index=False, engine='openpyxl')
+                QMessageBox.information(self, "Export Successful", f"Products exported to:\n{filepath}")
+            except Exception as e:
+                QMessageBox.critical(self, "Export Error", f"An error occurred:\n{str(e)}")
+        self.load_products()
+
