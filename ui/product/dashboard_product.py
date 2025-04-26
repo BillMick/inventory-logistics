@@ -1,13 +1,13 @@
 from PyQt5.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QTableWidget,
     QTableWidgetItem, QComboBox, QLabel, QFrame, QSizePolicy,
-    QLineEdit, QHeaderView
+    QLineEdit, QHeaderView, QFileDialog, QMessageBox
 )
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QColor, QFont
 from db.manager import fetch_all_products_with_stock
+from utils.excel_importer import import_products_from_excel
 from ui.product.dialog_add_product import AddProductDialog
-
 
 class ProductDashboard(QWidget):
     def __init__(self):
@@ -45,6 +45,10 @@ class ProductDashboard(QWidget):
         btn_add = QPushButton("Add Product")
         btn_add.clicked.connect(self.add_product)
         btn_add.setStyleSheet("background-color: #007bff; color: white; font-weight: bold;")
+        
+        btn_import = QPushButton("Import from Excel")
+        btn_import.clicked.connect(self.import_products)
+        btn_import.setStyleSheet("background-color: #20c997; color: white; font-weight: bold;")
 
         btn_refresh = QPushButton("Refresh")
         btn_refresh.clicked.connect(self.load_products)
@@ -53,6 +57,7 @@ class ProductDashboard(QWidget):
         filter_layout.addStretch()
         filter_layout.addWidget(self.name_filter)
         filter_layout.addWidget(btn_add)
+        filter_layout.addWidget(btn_import)
         filter_layout.addWidget(btn_refresh)
 
         layout.addLayout(filter_layout)
@@ -110,7 +115,7 @@ class ProductDashboard(QWidget):
     def load_products(self):
         self.table.setRowCount(0)
         products = fetch_all_products_with_stock()
-        print(products)
+        # print(products)
 
         total_stock = 0
         below_threshold = 0
@@ -151,6 +156,16 @@ class ProductDashboard(QWidget):
         self.stock_label.value_label.setText(str(total_stock))
         self.below_label.value_label.setText(str(below_threshold))
         self.out_label.value_label.setText(str(out_of_stock))
+
+    def import_products(self):
+        path, _ = QFileDialog.getOpenFileName(self, "Select Excel File", "", "Excel Files (*.xlsx *.xls)")
+        if path:
+            try:
+                import_products_from_excel(path)
+                QMessageBox.information(self, "Success", "Products imported successfully!")
+                self.load_products()
+            except Exception as e:
+                QMessageBox.critical(self, "Error", f"Failed to import products:\n{str(e)}")
 
     def add_product(self):
         dialog = AddProductDialog(self)

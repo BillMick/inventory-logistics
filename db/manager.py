@@ -364,3 +364,25 @@ def fetch_all_suppliers():
     finally:
         cursor.close()
         conn.close()
+
+
+def get_or_create_supplier_id(name):
+    conn = connection()
+    cursor = conn.cursor()
+    try:
+        cursor.execute("SELECT id FROM supplier WHERE name = %s", (name,))
+        result = cursor.fetchone()
+        if result:
+            return result[0]
+        cursor.execute(
+            "INSERT INTO supplier (name, fiscal_id) VALUES (%s, %s) RETURNING id",
+            (name, f"AUTO-{name[:3].upper()}"),
+        )
+        conn.commit()
+        return cursor.fetchone()[0]
+    except Exception as e:
+        conn.rollback()
+        raise e
+    finally:
+        cursor.close()
+        conn.close()
