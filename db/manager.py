@@ -3,6 +3,7 @@ import psycopg2
 from db.config import connection
 from datetime import datetime
 import os
+import psycopg2.extras
 from psycopg2.extras import DictCursor
 
 
@@ -437,3 +438,13 @@ def update_product_archived_status(product_id, archived):
     conn.commit()
     cursor.close()
     conn.close()
+    
+
+def get_user_by_email(email):
+    conn = connection()
+    cur = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
+    cur.execute("SELECT * FROM users WHERE email = %s", (email,))
+    user = cur.fetchone()
+    cur.close()
+    conn.close()
+    return dict(user) if user else None

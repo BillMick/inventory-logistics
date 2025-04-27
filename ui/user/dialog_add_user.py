@@ -6,6 +6,7 @@ from PyQt5.QtWidgets import (
     QPushButton, QCheckBox, QMessageBox
 )
 from db.manager import insert_user  # You'll need to create this function
+from utils.auth import hash_password
 
 class AddUserDialog(QDialog):
     def __init__(self, parent=None):
@@ -61,7 +62,8 @@ class AddUserDialog(QDialog):
             return
 
         # Hash the password
-        password_hash = hashlib.sha256(password.encode()).hexdigest()
+        import bcrypt
+        password_hash = hash_password(password)
 
         try:
             insert_user(username, email, password_hash, is_admin)

@@ -1,14 +1,27 @@
-from PyQt5.QtWidgets import QApplication
-from ui.product.dashboard_product import ProductDashboard
-from ui.stock_movement.dashboard_stock_movement import StockMovementDashboard
+from PyQt5.QtWidgets import QApplication, QDialog
 from ui.main_interface import MainDashboard
+from ui.login_dialog import LoginDialog
 import sys
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
-    window = MainDashboard()
-    # window = StockMovementDashboard()
-    # window = ProductDashboard()
-    window.show()
-    sys.exit(app.exec_())
+
+    login = LoginDialog()
+    if login.exec_() == QDialog.Accepted:
+        window = MainDashboard(user=login.user_data)
+        window.show()
+        sys.exit(app.exec_())
+    else:
+        sys.exit(0)
+
+
+# from PyQt5.QtWidgets import QApplication
+# from ui.main_interface import MainDashboard
+# import sys
+
+# if __name__ == "__main__":
+#     app = QApplication(sys.argv)
+#     window = MainDashboard()
+#     window.show()
+#     sys.exit(app.exec_())
 
