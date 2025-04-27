@@ -60,9 +60,9 @@ def create_tables():
             product_id INTEGER REFERENCES product(id),
             type VARCHAR(10) CHECK (type IN ('IN', 'OUT')) NOT NULL,
             label TEXT NOT NULL,
-            reason TEXT,
-            service TEXT NOT NULL,
+            recipient TEXT NOT NULL,
             quantity INTEGER NOT NULL CHECK (quantity > 0),
+            comment TEXT,
             timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         );
         """

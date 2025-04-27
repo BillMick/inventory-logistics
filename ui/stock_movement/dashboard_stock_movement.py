@@ -25,14 +25,27 @@ class StockMovementDashboard(QWidget):
         self.out_label = self.create_stat_card("Total OUT", "0", "#dc3545")
         self.avg_qty_label = self.create_stat_card("Avg Quantity", "0")
         self.last_movement_label = self.create_stat_card("Last Movement", "-")
+        
+        self.label_stats_layout = QHBoxLayout()
+        self.label_stats_layout.setSpacing(10)
+        self.incoming_label = self.create_stat_card("Incoming", "0", "#6f42c1")
+        self.back_label = self.create_stat_card("Back", "0", "#20c997")
+        self.delivery_label = self.create_stat_card("Delivery", "0", "#fd7e14")
+        self.restocking_label = self.create_stat_card("Restocking", "0", "#ffc107")
 
         self.stats_layout.addWidget(self.total_label)
         self.stats_layout.addWidget(self.in_label)
         self.stats_layout.addWidget(self.out_label)
         self.stats_layout.addWidget(self.avg_qty_label)
         self.stats_layout.addWidget(self.last_movement_label)
+        self.label_stats_layout.addWidget(self.incoming_label)
+        self.label_stats_layout.addWidget(self.back_label)
+        self.label_stats_layout.addWidget(self.delivery_label)
+        self.label_stats_layout.addWidget(self.restocking_label)
 
         layout.addLayout(self.stats_layout)
+        layout.addWidget(self.horizontal_line())
+        layout.addLayout(self.label_stats_layout)
         layout.addWidget(self.horizontal_line())
 
         # --- Filter + Buttons Section ---
@@ -73,10 +86,10 @@ class StockMovementDashboard(QWidget):
         self.table = QTableWidget()
         self.table.setColumnCount(8)
         self.table.setHorizontalHeaderLabels([
-            "ID", "Product", "Type", "Label", "Reason", "Service", "Quantity", "Timestamp"
+            "ID", "Product", "Type", "Label", "Recipient", "Quantity", "Comment", "Timestamp"
         ])
         self.table.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
-        self.table.setSortingEnabled(True)  # ✅ Enable sorting
+        self.table.setSortingEnabled(True)
 
         # Optional: Resize columns to content initially
         self.table.horizontalHeader().setStretchLastSection(True)
@@ -130,6 +143,7 @@ class StockMovementDashboard(QWidget):
 
         in_count = out_count = total_qty = 0
         last_movement = "-"
+        incoming_count = back_count = delivery_count = restocking_count = 0
 
         for m in movements:
             base_name = m[1].lower()
@@ -142,8 +156,18 @@ class StockMovementDashboard(QWidget):
                 in_count += 1
             elif m[2] == "OUT":
                 out_count += 1
-            total_qty += m[6]
+            total_qty += m[5]
             last_movement = m[7]
+            label = m[3]
+            if label == "Incoming":
+                incoming_count += 1
+            elif label == "Back":
+                back_count += 1
+            elif label == "Delivery":
+                delivery_count += 1
+            elif label == "Restocking":
+                restocking_count += 1
+
 
         for row_num, m in enumerate(filtered):
             self.table.insertRow(row_num)
@@ -160,6 +184,10 @@ class StockMovementDashboard(QWidget):
         self.out_label.value_label.setText(str(out_count))
         self.avg_qty_label.value_label.setText(str(avg_qty))
         self.last_movement_label.value_label.setText(str(last_movement))
+        self.incoming_label.value_label.setText(str(incoming_count))
+        self.back_label.value_label.setText(str(back_count))
+        self.delivery_label.value_label.setText(str(delivery_count))
+        self.restocking_label.value_label.setText(str(restocking_count))
 
     def add_movement(self):
         from ui.stock_movement.dialog_add_movement import AddMovementDialog

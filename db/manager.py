@@ -71,17 +71,17 @@ def fetch_all_products():
         logging.error(f"Unexpected error in fetch_all_products: {e}")
 
 # Insert Stock Movement
-def insert_stock_movement(product_id, type_, label, reason, service, quantity):
+def insert_stock_movement(product_id, type_, label, comment, recipient, quantity):
     try:
         conn = connection()
         with conn:
             with conn.cursor() as cur:
                 cur.execute("""
                     INSERT INTO stock_movement 
-                    (product_id, type, label, reason, service, quantity)
+                    (product_id, type, label, comment, recipient, quantity)
                     VALUES (%s, %s, %s, %s, %s, %s)
                     RETURNING id;
-                """, (product_id, type_, label, reason, service, quantity))
+                """, (product_id, type_, label, comment, recipient, quantity))
                 movement_id = cur.fetchone()[0]
                 logging.info(f"Inserted stock movement ID {movement_id} for product {product_id} ({type_}, {label})")
                 return movement_id
@@ -177,9 +177,9 @@ def fetch_all_stock_movements():
                 p.name AS product,
                 sm.type,
                 sm.label,
-                sm.reason,
-                sm.service,
+                sm.recipient,
                 sm.quantity,
+                sm.comment,
                 sm.timestamp
             FROM stock_movement sm
             JOIN product p ON p.id = sm.product_id

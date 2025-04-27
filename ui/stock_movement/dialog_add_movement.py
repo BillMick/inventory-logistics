@@ -24,8 +24,16 @@ class AddMovementDialog(QDialog):
 
         # Other input fields
         self.label_input = QLineEdit()
-        self.reason_input = QLineEdit()
-        self.service_input = QLineEdit()
+        # Label dropdown (will update based on type)
+        self.label_input = QComboBox()
+        self.update_label_options("IN")
+
+        # Connect type change to update label options
+        self.type_dropdown.currentTextChanged.connect(self.update_label_options)
+        
+        self.recipient_input = QLineEdit()
+        
+        self.comment_input = QLineEdit()
 
         self.quantity_input = QSpinBox()
         self.quantity_input.setMinimum(1)
@@ -35,9 +43,9 @@ class AddMovementDialog(QDialog):
         form.addRow("Product", self.product_dropdown)
         form.addRow("Type", self.type_dropdown)
         form.addRow("Label", self.label_input)
-        form.addRow("Reason", self.reason_input)
-        form.addRow("Service", self.service_input)
+        form.addRow("Recipient", self.recipient_input)
         form.addRow("Quantity", self.quantity_input)
+        form.addRow("Comment", self.comment_input)
 
         layout.addLayout(form)
 
@@ -53,15 +61,22 @@ class AddMovementDialog(QDialog):
         try:
             product_id = self.product_dropdown.currentData()  # Get selected product ID
             movement_type = self.type_dropdown.currentText()
-            label = self.label_input.text()
-            reason = self.reason_input.text()
-            service = self.service_input.text()
+            label = self.label_input.currentText()
+            comment = self.comment_input.text()
+            recipient = self.recipient_input.text()
             quantity = self.quantity_input.value()
 
             # Insert the stock movement
-            insert_stock_movement(product_id, movement_type, label, reason, service, quantity)
+            insert_stock_movement(product_id, movement_type, label, comment, recipient, quantity)
 
             QMessageBox.information(self, "Success", "Stock movement added successfully.")
             self.accept()
         except Exception as e:
             QMessageBox.critical(self, "Error", f"Failed to add movement: {e}")
+    
+    def update_label_options(self, movement_type):
+        self.label_input.clear()
+        if movement_type == "IN":
+            self.label_input.addItems(["Incoming", "Back"])
+        elif movement_type == "OUT":
+            self.label_input.addItems(["Delivery", "Restocking"])
