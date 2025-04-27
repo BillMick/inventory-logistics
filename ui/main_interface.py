@@ -78,13 +78,13 @@ class MainDashboard(QWidget):
             "Dashboard": self.style().standardIcon(QStyle.SP_ComputerIcon),
             "Movements": self.style().standardIcon(QStyle.SP_FileDialogContentsView),
             "Products": self.style().standardIcon(QStyle.SP_DirIcon),
-            "Users": self.style().standardIcon(QStyle.SP_FileDialogDetailedView),
             "Suppliers": self.style().standardIcon(QStyle.SP_DriveNetIcon),
             "Clients": self.style().standardIcon(QStyle.SP_DirHomeIcon),
+            "Users": self.style().standardIcon(QStyle.SP_FileDialogDetailedView),
         }
 
         menu_layout = QHBoxLayout()
-        for i, name in enumerate(["Dashboard", "Movements", "Products", "Users", "Suppliers", "Clients"]):
+        for i, name in enumerate(["Dashboard", "Movements", "Products", "Suppliers", "Clients", "Users"]):
             if name == "Users" and not self.user.get("is_admin"):
                 continue
             btn = QPushButton(icons[name], name)

@@ -40,11 +40,11 @@ class SupplierDashboard(QWidget):
         
         btn_import = QPushButton("Import from Excel")
         btn_import.clicked.connect(self.import_suppliers_from_excel)
-        btn_import.setStyleSheet("background-color: #28a745; color: white")
+        btn_import.setStyleSheet("background-color: #20c997; color: white")
         
         btn_export = QPushButton("Export to Excel")
         btn_export.clicked.connect(self.export_suppliers_to_excel)
-        btn_export.setStyleSheet("background-color: #007bff; color: white")
+        btn_export.setStyleSheet("background-color: #28a745; color: white")
         
         btn_export_pdf = QPushButton("Export to PDF")
         btn_export_pdf.setStyleSheet("background-color: #6c757d; color: white")
