@@ -51,19 +51,23 @@ class ProductDashboard(QWidget):
         
         btn_add = QPushButton("Add Product")
         btn_add.clicked.connect(self.add_product)
-        btn_add.setStyleSheet("background-color: #007bff; color: white; font-weight: bold;")
+        btn_add.setStyleSheet("background-color: #007bff; color: white;")
         
         btn_import = QPushButton("Import from Excel")
         btn_import.clicked.connect(self.import_products)
-        btn_import.setStyleSheet("background-color: #20c997; color: white; font-weight: bold;")
+        btn_import.setStyleSheet("background-color: #20c997; color: white;")
         
         btn_export = QPushButton("Export to Excel")
         btn_export.clicked.connect(self.export_to_excel)
-        btn_export.setStyleSheet("background-color: #28a745; color: white; font-weight: bold;")
+        btn_export.setStyleSheet("background-color: #28a745; color: white;")
+        
+        btn_pdf = QPushButton("Export to PDF")
+        btn_pdf.clicked.connect(self.export_pdf_report)
+        btn_pdf.setStyleSheet("background-color: #6c757d; color: white;")
 
         btn_refresh = QPushButton("Refresh")
         btn_refresh.clicked.connect(self.load_products)
-        btn_refresh.setStyleSheet("background-color: #17a2b8; color: white; font-weight: bold;")
+        btn_refresh.setStyleSheet("background-color: #17a2b8; color: white;")
 
         filter_layout.addStretch()
         filter_layout.addWidget(self.name_filter)
@@ -71,6 +75,7 @@ class ProductDashboard(QWidget):
         filter_layout.addWidget(btn_add)
         filter_layout.addWidget(btn_import)
         filter_layout.addWidget(btn_export)
+        filter_layout.addWidget(btn_pdf)
         filter_layout.addWidget(btn_refresh)
 
         layout.addLayout(filter_layout)
@@ -282,3 +287,86 @@ class ProductDashboard(QWidget):
             self.load_products()
         except Exception as e:
             QMessageBox.critical(self, "Error", f"Failed to update archive status:\n{str(e)}")
+            
+    def export_pdf_report(self):
+        from reportlab.pdfgen import canvas
+        from reportlab.lib.pagesizes import A4, landscape
+        from reportlab.lib import colors
+        from reportlab.platypus import Table, TableStyle
+        from datetime import datetime
+        from PyQt5.QtWidgets import QFileDialog, QMessageBox
+
+        if self.table.rowCount() == 0:
+            QMessageBox.warning(self, "Export Failed", "No data to export.")
+            return
+
+        filepath, _ = QFileDialog.getSaveFileName(self, "Save PDF", "", "PDF Files (*.pdf)")
+        if not filepath:
+            return
+        if not filepath.endswith(".pdf"):
+            filepath += ".pdf"
+
+        c = canvas.Canvas(filepath, pagesize=landscape(A4))
+        width, height = landscape(A4)
+
+        # --- Title and Timestamp ---
+        c.setFont("Helvetica-Bold", 16)
+        c.drawCentredString(width / 2, height - 50, "Product Inventory Report")
+
+        c.setFont("Helvetica", 10)
+        c.drawString(50, height - 70, f"Generated on: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')} by: {self.user['username']}")
+
+
+        y = height - 100
+
+        # --- KPI Cards ---
+        kpis = [
+            self.total_label,
+            self.stock_label,
+            self.below_label,
+            self.out_label,
+            self.value_label,
+        ]
+        for card in kpis:
+            title = card.layout().itemAt(1).widget().text()
+            value = card.value_label.text()
+            c.drawString(50, y, f"{title}: {value}")
+            y -= 15
+            if y < 100:
+                c.showPage()
+                y = height - 50
+
+        c.showPage()
+
+        # --- Table Data ---
+        headers = [self.table.horizontalHeaderItem(i).text() for i in range(self.table.columnCount())]
+        data = [headers]
+
+        for row in range(self.table.rowCount()):
+            row_data = []
+            for col in range(self.table.columnCount()):
+                item = self.table.item(row, col)
+                row_data.append(item.text() if item else "")
+            data.append(row_data)
+
+        # --- Paginate Table ---
+        rows_per_page = 25
+        for i in range(0, len(data), rows_per_page):
+            page_data = data[i:i + rows_per_page]
+            colWidths = [30, 50, 50, 50, 30, 50, 50, 50, 40, 50, 100, 120, 30]
+            table = Table(page_data, repeatRows=1, colWidths=colWidths)
+            table.setStyle(TableStyle([
+                ('BACKGROUND', (0, 0), (-1, 0), colors.gray),
+                ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+                ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+                ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+                ('FONTSIZE', (0, 0), (-1, -1), 7),
+                ('BOTTOMPADDING', (0, 0), (-1, 0), 6),
+                ('GRID', (0, 0), (-1, -1), 0.25, colors.black),
+            ]))
+            w, h = table.wrapOn(c, width - 100, height)
+            table.drawOn(c, 40, height - h - 50)
+            c.showPage()
+
+        c.save()
+        QMessageBox.information(self, "Export Successful", f"PDF report saved to:\n{filepath}")

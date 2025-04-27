@@ -14,6 +14,7 @@ class PieChartWidget(QWidget):
         self.plot(data, title)
 
     def plot(self, data, title):
+        print(data)
         self.figure.clear()
         ax = self.figure.add_subplot(111)
         

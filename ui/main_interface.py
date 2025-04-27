@@ -1,7 +1,7 @@
 from PyQt5.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QPushButton, 
     QLabel, QFrame, QStackedWidget, QStyle, QSizePolicy,
-    QGridLayout
+    QGridLayout, QFileDialog, QMessageBox
 )
 from PyQt5.QtCore import QPropertyAnimation, QEasingCurve, pyqtProperty, Qt
 from PyQt5.QtGui import QFont, QPainter
@@ -120,12 +120,17 @@ class MainDashboard(QWidget):
         menu_layout.addStretch()
         btn_refresh = QPushButton("Main interface Refresh")
         btn_refresh.clicked.connect(self.update_dashboard)
-        btn_refresh.setStyleSheet("background-color: #17a2b8; color: white; font-weight: bold;")
+        btn_refresh.setStyleSheet("background-color: #17a2b8; color: white; padding: 8px 16px; border-radius: 6px;")
         
         quit_btn = QPushButton("Quit")
         quit_btn.setStyleSheet("background-color: #e74c3c; color: white; padding: 8px 16px; border-radius: 6px;")
         quit_btn.clicked.connect(self.close)
         
+        btn_export_pdf = QPushButton("Export Report as PDF")
+        btn_export_pdf.setStyleSheet("background-color: #28a745; color: white; padding: 8px 16px; border-radius: 6px;")
+        btn_export_pdf.clicked.connect(self.export_pdf_report)
+        
+        menu_layout.addWidget(btn_export_pdf)
         menu_layout.addWidget(btn_refresh)
         menu_layout.addWidget(quit_btn)
 
@@ -175,11 +180,11 @@ class MainDashboard(QWidget):
         # --- Charts Section ---
         charts_layout = QHBoxLayout()
         self.movement_chart = PieChartWidget({}, "Stock Movement Distribution")
-        # self.evolution_chart = PieChartWidget({}, "Movement Category Distribution")
+        self.evolution_chart = PieChartWidget({}, "Movement Category Distribution")
         self.top_products_chart = BarChartWidget({}, "Top Products")
 
         charts_layout.addWidget(self.movement_chart)
-        # charts_layout.addWidget(self.evolution_chart)
+        charts_layout.addWidget(self.evolution_chart)
         charts_layout.addWidget(self.top_products_chart)
 
         dashboard_layout.addLayout(charts_layout)
@@ -288,14 +293,80 @@ class MainDashboard(QWidget):
             "Top Products"
         )
         # --- Update Evolution Chart ---
-        # evolution_data = {
-        #     "Incoming": incoming_count,
-        #     "Back": back_count,
-        #     "Delivery": delivery_count,
-        #     "Restocking": restocking_count
-        # }
+        evolution_data = {
+            "Incoming": incoming_count,
+            "Back": back_count,
+            "Delivery": delivery_count,
+            "Restocking": restocking_count
+        }
 
-        # self.evolution_chart.plot(
-        #     evolution_data,
-        #     "Label Evolution"
-        # )
+        self.evolution_chart.plot(
+            evolution_data,
+            "Label Evolution"
+        )
+
+    def export_pdf_report(self):
+        from reportlab.pdfgen import canvas
+        from reportlab.lib.pagesizes import A4
+        import tempfile
+        from datetime import datetime
+        import os
+
+        filepath, _ = QFileDialog.getSaveFileName(self, "Save File", "", "PDF Files (*.pdf)")
+        if filepath:
+            if not filepath.endswith(".pdf"):
+                filepath += ".pdf"
+        
+        c = canvas.Canvas(filepath, pagesize=A4)
+        width, height = A4
+
+        c.setFont("Helvetica-Bold", 20)
+        c.drawCentredString(width / 2, height - 50, "Inventory Dashboard Report")
+        c.setFont("Helvetica", 12)
+        c.drawString(50, height - 80, f"Generated on: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')} by: {self.user['username']}")
+
+        y_pos = height - 120
+
+        # KPI text
+        kpis = [
+            self.total_movements_card,
+            self.in_card,
+            self.out_card,
+            self.total_products_card,
+            self.total_stock_card,
+            self.below_threshold_card,
+            self.out_of_stock_card,
+            self.value_label_card,
+            self.total_suppliers_card,
+            self.total_clients_card
+        ]
+        c.setFont("Helvetica", 10)
+        for kpi in kpis:
+            label = kpi.layout().itemAt(1).widget().text()
+            value = kpi.value_label.text()
+            c.drawString(50, y_pos, f"{label}: {value}")
+            y_pos -= 15
+            if y_pos < 100:
+                c.showPage()
+                y_pos = height - 50
+
+        c.showPage()
+
+        # --- Save Matplotlib Figures directly ---
+        charts = [
+            (self.movement_chart.figure, "Stock Movement Distribution"),
+            (self.evolution_chart.figure, "Movement Category Distribution"),
+            (self.top_products_chart.figure, "Top Products")
+        ]
+
+        for fig, title in charts:
+            with tempfile.NamedTemporaryFile(suffix=".png", delete=False) as tmp_file:
+                fig.savefig(tmp_file.name, bbox_inches='tight')
+                c.drawString(50, height - 80, title)
+                c.drawImage(tmp_file.name, 50, height / 2 - 100, width=500, height=250)
+                c.showPage()
+                os.unlink(tmp_file.name)
+        c.save()
+        print(f"PDF report saved as {filepath}")
+        QMessageBox.information(self, "Export Successful", f"PDF report saved to:\n{filepath}")
+        

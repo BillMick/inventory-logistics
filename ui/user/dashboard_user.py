@@ -44,14 +44,18 @@ class UserDashboard(QWidget):
 
         btn_refresh = QPushButton("Refresh")
         btn_refresh.clicked.connect(self.load_users)
-        btn_refresh.setStyleSheet("background-color: #17a2b8; color: white; font-weight: bold;")
+        btn_refresh.setStyleSheet("background-color: #17a2b8; color: white")
 
         btn_add = QPushButton("Add User")
         btn_add.clicked.connect(self.add_user)
-        btn_add.setStyleSheet("background-color: #007bff; color: white; font-weight: bold;")
+        btn_add.setStyleSheet("background-color: #007bff; color: white")
+        
+        btn_pdf = QPushButton("Export to PDF")
+        btn_pdf.clicked.connect(self.export_pdf_report)
+        btn_pdf.setStyleSheet("background-color: #6c757d; color: white;")
 
         btn_quit = QPushButton("Quit")
-        btn_quit.setStyleSheet("background-color: #dc3545; color: white; font-weight: bold;")
+        btn_quit.setStyleSheet("background-color: #dc3545; color: white")
         btn_quit.clicked.connect(self.close)
 
         filter_layout.addWidget(QLabel("Role:"))
@@ -59,6 +63,7 @@ class UserDashboard(QWidget):
         filter_layout.addStretch()
         filter_layout.addWidget(self.username_filter)
         filter_layout.addWidget(btn_add)
+        filter_layout.addWidget(btn_pdf)
         filter_layout.addWidget(btn_refresh)
         filter_layout.addWidget(btn_quit)
 
@@ -140,7 +145,7 @@ class UserDashboard(QWidget):
 
                 # Add Delete button in Action column
                 btn_delete = QPushButton("Delete")
-                btn_delete.setStyleSheet("background-color: #dc3545; color: white; font-weight: bold;")
+                btn_delete.setStyleSheet("background-color: #dc3545; color: white;")
                 btn_delete.clicked.connect(partial(self.delete_user, user_id=user_id))
                 self.table.setCellWidget(row, 5, btn_delete)
 
@@ -173,3 +178,82 @@ class UserDashboard(QWidget):
         dialog = AddUserDialog(self)
         if dialog.exec_():
             self.load_users()
+
+    def export_pdf_report(self):
+        from reportlab.pdfgen import canvas
+        from reportlab.lib.pagesizes import A4
+        from reportlab.lib import colors
+        from reportlab.platypus import Table, TableStyle
+        from PyQt5.QtWidgets import QFileDialog, QMessageBox
+        from datetime import datetime
+
+        if self.table.rowCount() == 0:
+            QMessageBox.warning(self, "Export Failed", "No data to export.")
+            return
+
+        filepath, _ = QFileDialog.getSaveFileName(self, "Save PDF", "", "PDF Files (*.pdf)")
+        if not filepath:
+            return
+        if not filepath.endswith(".pdf"):
+            filepath += ".pdf"
+
+        c = canvas.Canvas(filepath, pagesize=A4)
+        width, height = A4
+
+        # --- Title and Timestamp ---
+        c.setFont("Helvetica-Bold", 16)
+        c.drawCentredString(width / 2, height - 50, "User Report")
+
+        c.setFont("Helvetica", 10)
+        c.drawString(50, height - 70, f"Generated on: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')} by: {self.user['username']}")
+
+        y = height - 100
+
+        # --- Stat cards ---
+        kpis = [
+            self.total_users,
+            self.admins,
+            self.last_user,
+        ]
+        for card in kpis:
+            title = card.layout().itemAt(1).widget().text()
+            value = card.value_label.text()
+            c.drawString(50, y, f"{title}: {value}")
+            y -= 15
+            if y < 100:
+                c.showPage()
+                y = height - 50
+
+        c.showPage()
+
+        # --- Table Headers + Data ---
+        headers = ["ID", "Username", "Email", "Role", "Created At"]
+        data = [headers]
+
+        for row in range(self.table.rowCount()):
+            row_data = []
+            for col in range(5):  # Skip "Action"
+                item = self.table.item(row, col)
+                row_data.append(item.text() if item else "")
+            data.append(row_data)
+
+        # --- Paginate table ---
+        rows_per_page = 25
+        for i in range(0, len(data), rows_per_page):
+            page_data = data[i:i + rows_per_page]
+            table = Table(page_data, repeatRows=1, colWidths=[60, 100, 150, 80, 100])
+            table.setStyle(TableStyle([
+                ('BACKGROUND', (0, 0), (-1, 0), colors.darkblue),
+                ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+                ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+                ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+                ('FONTSIZE', (0, 0), (-1, -1), 8),
+                ('BOTTOMPADDING', (0, 0), (-1, 0), 6),
+                ('GRID', (0, 0), (-1, -1), 0.25, colors.black),
+            ]))
+            w, h = table.wrapOn(c, width - 80, height)
+            table.drawOn(c, 40, height - h - 50)
+            c.showPage()
+
+        c.save()
+        QMessageBox.information(self, "Export Successful", f"PDF report saved to:\n{filepath}")
