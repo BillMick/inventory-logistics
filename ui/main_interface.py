@@ -175,11 +175,11 @@ class MainDashboard(QWidget):
         # --- Charts Section ---
         charts_layout = QHBoxLayout()
         self.movement_chart = PieChartWidget({}, "Stock Movement Distribution")
-        self.evolution_chart = PieChartWidget({}, "Movement Category Distribution")
+        # self.evolution_chart = PieChartWidget({}, "Movement Category Distribution")
         self.top_products_chart = BarChartWidget({}, "Top Products")
 
         charts_layout.addWidget(self.movement_chart)
-        charts_layout.addWidget(self.evolution_chart)
+        # charts_layout.addWidget(self.evolution_chart)
         charts_layout.addWidget(self.top_products_chart)
 
         dashboard_layout.addLayout(charts_layout)
@@ -288,14 +288,14 @@ class MainDashboard(QWidget):
             "Top Products"
         )
         # --- Update Evolution Chart ---
-        evolution_data = {
-            "Incoming": incoming_count,
-            "Back": back_count,
-            "Delivery": delivery_count,
-            "Restocking": restocking_count
-        }
+        # evolution_data = {
+        #     "Incoming": incoming_count,
+        #     "Back": back_count,
+        #     "Delivery": delivery_count,
+        #     "Restocking": restocking_count
+        # }
 
-        self.evolution_chart.plot(
-            evolution_data,
-            "Label Evolution"
-        )
+        # self.evolution_chart.plot(
+        #     evolution_data,
+        #     "Label Evolution"
+        # )

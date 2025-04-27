@@ -16,14 +16,15 @@ class PieChartWidget(QWidget):
     def plot(self, data, title):
         self.figure.clear()
         ax = self.figure.add_subplot(111)
-        labels = list(data.keys())
-        sizes = list(data.values())
-
-        if sum(sizes) > 0:  # Only plot if there's something to show
-            ax.pie(sizes, labels=labels, autopct='%1.1f%%', startangle=90)
-        else:
-            ax.text(0.5, 0.5, 'No data available', horizontalalignment='center', verticalalignment='center')
         
+        # Validate data before plotting
+        if not data or all(value == 0 for value in data.values()):
+            ax.text(0.5, 0.5, 'No data available', horizontalalignment='center', verticalalignment='center')
+        else:
+            labels = list(data.keys())
+            sizes = list(data.values())
+            ax.pie(sizes, labels=labels, autopct='%1.1f%%', startangle=90)
+            
         ax.set_title(title)
         ax.axis('equal')
         self.canvas.draw()
