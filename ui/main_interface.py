@@ -7,12 +7,12 @@ from PyQt5.QtCore import QPropertyAnimation, QEasingCurve, pyqtProperty, Qt
 from PyQt5.QtGui import QFont, QPainter
 from ui.widgets.pie_chart import PieChartWidget
 from ui.widgets.bar_chart import BarChartWidget
-from db.manager import fetch_all_stock_movements, fetch_product_stats, fetch_all_products_with_stock
+from db.manager import fetch_all_stock_movements, fetch_product_stats, fetch_all_products_with_stock, fetch_all_clients, fetch_all_suppliers
 from ui.product.dashboard_product import ProductDashboard
 from ui.stock_movement.dashboard_stock_movement import StockMovementDashboard
 from ui.user.dashboard_user import UserDashboard
 from ui.supplier.dashboard_supplier import SupplierDashboard
-from ui.client.dashboard_client import CustomerDashboard
+from ui.client.dashboard_client import ClientDashboard
 
 class FadeStackedWidget(QStackedWidget):
     def __init__(self, parent=None):
@@ -80,11 +80,11 @@ class MainDashboard(QWidget):
             "Products": self.style().standardIcon(QStyle.SP_DirIcon),
             "Users": self.style().standardIcon(QStyle.SP_FileDialogDetailedView),
             "Suppliers": self.style().standardIcon(QStyle.SP_DriveNetIcon),
-            "Customers": self.style().standardIcon(QStyle.SP_DirHomeIcon),
+            "Clients": self.style().standardIcon(QStyle.SP_DirHomeIcon),
         }
 
         menu_layout = QHBoxLayout()
-        for i, name in enumerate(["Dashboard", "Movements", "Products", "Users", "Suppliers", "Customers"]):
+        for i, name in enumerate(["Dashboard", "Movements", "Products", "Users", "Suppliers", "Clients"]):
             if name == "Users" and not self.user.get("is_admin"):
                 continue
             btn = QPushButton(icons[name], name)
@@ -112,15 +112,21 @@ class MainDashboard(QWidget):
                 btn.clicked.connect(lambda _, idx=3: self.stack.fadeToIndex(idx))
             elif name == "Suppliers":
                 btn.clicked.connect(lambda _, idx=4: self.stack.fadeToIndex(idx))
-            elif name == "Customers":
+            elif name == "Clients":
                 btn.clicked.connect(lambda _, idx=5: self.stack.fadeToIndex(idx))
                 
             menu_layout.addWidget(btn)
 
         menu_layout.addStretch()
+        btn_refresh = QPushButton("Main interface Refresh")
+        btn_refresh.clicked.connect(self.update_dashboard)
+        btn_refresh.setStyleSheet("background-color: #17a2b8; color: white; font-weight: bold;")
+        
         quit_btn = QPushButton("Quit")
         quit_btn.setStyleSheet("background-color: #e74c3c; color: white; padding: 8px 16px; border-radius: 6px;")
         quit_btn.clicked.connect(self.close)
+        
+        menu_layout.addWidget(btn_refresh)
         menu_layout.addWidget(quit_btn)
 
         main_layout.addLayout(menu_layout)
@@ -146,12 +152,15 @@ class MainDashboard(QWidget):
         self.total_stock_card = self.create_stat_card("Total Stock", "0", "#20c997")
         self.below_threshold_card = self.create_stat_card("Below Threshold", "0", "#ffc107")
         self.out_of_stock_card = self.create_stat_card("Out of Stock", "0", "#e74c3c")
-        self.value_label = self.create_stat_card("Stock Value", "$0.00", "#6f42c1")
+        self.value_label_card = self.create_stat_card("Stock Value", "$0.00", "#6f42c1")
+        self.total_suppliers_card = self.create_stat_card("Total Suppliers", "0", "#17a2b8")
+        self.total_clients_card = self.create_stat_card("Total Clients", "0", "#17a2b8")
 
         # Add all KPI cards to layout
         cards = [
             self.total_movements_card, self.in_card, self.out_card, self.total_products_card,
-            self.total_stock_card, self.below_threshold_card, self.out_of_stock_card, self.value_label
+            self.total_stock_card, self.below_threshold_card, self.out_of_stock_card, self.value_label_card,
+            self.total_suppliers_card, self.total_clients_card
         ]
 
         for i, card in enumerate(cards):
@@ -166,9 +175,11 @@ class MainDashboard(QWidget):
         # --- Charts Section ---
         charts_layout = QHBoxLayout()
         self.movement_chart = PieChartWidget({}, "Stock Movement Distribution")
+        self.evolution_chart = PieChartWidget({}, "Movement Category Distribution")
         self.top_products_chart = BarChartWidget({}, "Top Products")
 
         charts_layout.addWidget(self.movement_chart)
+        charts_layout.addWidget(self.evolution_chart)
         charts_layout.addWidget(self.top_products_chart)
 
         dashboard_layout.addLayout(charts_layout)
@@ -183,7 +194,7 @@ class MainDashboard(QWidget):
         else:
             self.stack.addWidget(QWidget())
         self.stack.addWidget(SupplierDashboard())            # index 4
-        self.stack.addWidget(CustomerDashboard())            # index 4
+        self.stack.addWidget(ClientDashboard())            # index 5
 
         main_layout.addWidget(self.stack)
         self.setLayout(main_layout)
@@ -228,6 +239,8 @@ class MainDashboard(QWidget):
         stats = fetch_product_stats()
         products = fetch_all_products_with_stock()
         inventory_value = 0.0
+        suppliers = fetch_all_suppliers()
+        clients = fetch_all_clients()
 
         # Compute movement stats
         in_count = sum(1 for m in movements if m[2] == "IN")
@@ -240,6 +253,11 @@ class MainDashboard(QWidget):
         below_threshold = stats.get("below_threshold", 0)
         out_of_stock = stats.get("out_of_stock", 0)
         top_products = stats.get("top_products", {})
+        
+        incoming_count = sum(1 for m in movements if m[3] == "Incoming")
+        back_count = sum(1 for m in movements if m[3] == "Back")
+        delivery_count = sum(1 for m in movements if m[3] == "Delivery")
+        restocking_count = sum(1 for m in movements if m[3] == "Restocking")
         
         for row_idx, product in enumerate(products):
             stock = product[8]
@@ -255,7 +273,10 @@ class MainDashboard(QWidget):
         self.total_stock_card.value_label.setText(str(total_stock))
         self.below_threshold_card.value_label.setText(str(below_threshold))
         self.out_of_stock_card.value_label.setText(str(out_of_stock))
-        self.value_label.value_label.setText(f"${inventory_value:,.2f}")
+        self.value_label_card.value_label.setText(f"${inventory_value:,.2f}")
+        self.total_suppliers_card.value_label.setText(str(len(suppliers)))
+        self.total_clients_card.value_label.setText(str(len(clients)))
+        
 
         # --- Update charts ---
         self.movement_chart.plot(
@@ -265,4 +286,16 @@ class MainDashboard(QWidget):
         self.top_products_chart.plot(
             top_products,
             "Top Products"
+        )
+        # --- Update Evolution Chart ---
+        evolution_data = {
+            "Incoming": incoming_count,
+            "Back": back_count,
+            "Delivery": delivery_count,
+            "Restocking": restocking_count
+        }
+
+        self.evolution_chart.plot(
+            evolution_data,
+            "Label Evolution"
         )

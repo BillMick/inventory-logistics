@@ -8,10 +8,10 @@ from db.manager import fetch_all_clients, delete_client_by_id
 from functools import partial
 
 
-class CustomerDashboard(QWidget):
+class ClientDashboard(QWidget):
     def __init__(self):
         super().__init__()
-        self.setWindowTitle("Customer Management Dashboard")
+        self.setWindowTitle("Client Management Dashboard")
         self.showMaximized()
 
         layout = QVBoxLayout()
@@ -19,8 +19,8 @@ class CustomerDashboard(QWidget):
 
         # --- Stats Section ---
         stats_layout = QHBoxLayout()
-        self.total_clients = self.create_stat_card("Total Customers", "0")
-        self.latest_client = self.create_stat_card("Last Customer", "-")
+        self.total_clients = self.create_stat_card("Total Clients", "0")
+        self.latest_client = self.create_stat_card("Last Client", "-")
 
         stats_layout.addWidget(self.total_clients)
         stats_layout.addWidget(self.latest_client)
@@ -34,7 +34,7 @@ class CustomerDashboard(QWidget):
         self.name_filter.setPlaceholderText("Filter by name...")
         self.name_filter.textChanged.connect(self.load_clients)
 
-        btn_add = QPushButton("Add Customer")
+        btn_add = QPushButton("Add Client")
         btn_add.clicked.connect(self.add_client)
         btn_add.setStyleSheet("background-color: #007bff; color: white; font-weight: bold;")
 
@@ -150,7 +150,7 @@ class CustomerDashboard(QWidget):
         if confirm == QMessageBox.Yes:
             try:
                 delete_client_by_id(client_id)
-                QMessageBox.information(self, "Deleted", "Customer deleted successfully.")
+                QMessageBox.information(self, "Deleted", "Client deleted successfully.")
                 self.load_clients()
             except Exception as e:
                 QMessageBox.critical(self, "Error", f"Failed to delete client:\n{str(e)}")
@@ -164,7 +164,7 @@ class CustomerDashboard(QWidget):
             "email": self.table.item(row, 4).text(),
         }
 
-        from ui.client.dialog_update_client import UpdateCustomerDialog
-        dialog = UpdateCustomerDialog(self, client_data)
+        from ui.client.dialog_update_client import UpdateClientDialog
+        dialog = UpdateClientDialog(self, client_data)
         if dialog.exec_():
             self.load_clients()

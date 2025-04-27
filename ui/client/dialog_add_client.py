@@ -39,7 +39,7 @@ class AddClientDialog(QDialog):
                 self.email_input.text(),
                 self.address_input.text()
             )
-            QMessageBox.information(self, "Success", "Customer added successfully.")
+            QMessageBox.information(self, "Success", "Client added successfully.")
             self.accept()
         except Exception as e:
             QMessageBox.critical(self, "Error", str(e))
