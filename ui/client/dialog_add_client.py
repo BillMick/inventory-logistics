@@ -27,10 +27,12 @@ class AddClientDialog(QDialog):
         layout.addWidget(save_btn)
 
         self.setLayout(layout)
+        
+        self.new_client_id = None
 
     def save_client(self):
         try:
-            insert_client(
+            self.new_client_id = insert_client(
                 self.name_input.text(),
                 self.fiscal_id_input.text(),
                 self.contact_input.text(),
@@ -41,3 +43,7 @@ class AddClientDialog(QDialog):
             self.accept()
         except Exception as e:
             QMessageBox.critical(self, "Error", str(e))
+
+    def get_new_client_id(self):
+        # Return the ID of the newly added client
+        return self.new_client_id

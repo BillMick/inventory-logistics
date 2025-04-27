@@ -461,13 +461,21 @@ def delete_client_by_id(client_id):
         with conn.cursor() as cur:
             cur.execute("DELETE FROM client WHERE id = %s;", (client_id,))
             
-def insert_client(name, fiscal_id, contact, email, address):
+def insert_client(name, fiscal_id="", contact="", email="", address=""):
     with connection() as conn:
         with conn.cursor() as cur:
+            # Use the RETURNING clause to get the last inserted ID
             cur.execute("""
                 INSERT INTO client (name, fiscal_id, contact, email, address)
                 VALUES (%s, %s, %s, %s, %s)
+                RETURNING id
             """, (name, fiscal_id, contact, email, address))
+
+            # Fetch the returned ID of the newly inserted client
+            new_client_id = cur.fetchone()[0]  # Fetch the first column (id)
+
+            return new_client_id
+
 
 def update_client(client_id, name, fiscal_id, contact, email, address):
     with connection() as conn:

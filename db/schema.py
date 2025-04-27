@@ -78,7 +78,7 @@ def create_tables():
         CREATE TABLE IF NOT EXISTS client (
         id SERIAL PRIMARY KEY,
         name TEXT NOT NULL,
-        fiscal_id TEXT UNIQUE,
+        fiscal_id TEXT,
         contact TEXT,
         email TEXT,
         address TEXT,

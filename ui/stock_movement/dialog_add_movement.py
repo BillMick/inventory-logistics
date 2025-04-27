@@ -2,7 +2,7 @@ from PyQt5.QtWidgets import (
     QDialog, QVBoxLayout, QFormLayout, QLineEdit, QComboBox,
     QSpinBox, QPushButton, QDialogButtonBox, QMessageBox
 )
-from db.manager import fetch_all_products, insert_stock_movement
+from db.manager import fetch_all_products, insert_stock_movement, fetch_all_clients, insert_client
 
 class AddMovementDialog(QDialog):
     def __init__(self, parent=None):
@@ -30,8 +30,17 @@ class AddMovementDialog(QDialog):
 
         # Connect type change to update label options
         self.type_dropdown.currentTextChanged.connect(self.update_label_options)
+        self.type_dropdown.currentTextChanged.connect(self.toggle_recipient_visibility)
         
-        self.recipient_input = QLineEdit()
+        # self.recipient_input = QLineEdit()
+        # Editable client selection dropdown (existing or custom)
+        self.recipient_input = QComboBox()
+        self.recipient_input.setEditable(True)  # Make it editable
+        self.recipient_input.addItem("Select Client")  # Default prompt text
+        self.clients = fetch_all_clients()
+        for client in self.clients:
+            self.recipient_input.addItem(client[1], client[0])  # client name, client id
+        self.recipient_input.setVisible(False)
         
         self.comment_input = QLineEdit()
 
@@ -63,8 +72,27 @@ class AddMovementDialog(QDialog):
             movement_type = self.type_dropdown.currentText()
             label = self.label_input.currentText()
             comment = self.comment_input.text()
-            recipient = self.recipient_input.text()
+            recipient = self.recipient_input.currentText()
             quantity = self.quantity_input.value()
+            
+            if movement_type == "OUT" and recipient == "Select Client":
+                QMessageBox.warning(self, "Warning", "Please select a valid recipient or enter a new client name.")
+                return
+
+            # Check if recipient exists in the list or is new
+            recipient_id = None
+            if movement_type == "OUT":
+                for client in self.clients:
+                    if client[1].lower() == recipient.lower():
+                        recipient_id = client[0]  # Existing client ID
+                        break
+            elif movement_type == "IN":
+                recipient = "Service"  # Default recipient for "IN" movement
+                recipient_id = 0
+
+            # If the recipient is new (not found in the list), add them to the database
+            if recipient_id is None:
+                recipient_id = self.add_new_client(recipient)  # Function to add new client
 
             # Insert the stock movement
             insert_stock_movement(product_id, movement_type, label, comment, recipient, quantity)
@@ -80,3 +108,26 @@ class AddMovementDialog(QDialog):
             self.label_input.addItems(["Incoming", "Back"])
         elif movement_type == "OUT":
             self.label_input.addItems(["Delivery", "Restocking"])
+
+    def toggle_recipient_visibility(self, movement_type):
+        """ Toggle the recipient input visibility based on the movement type """
+        if movement_type == "IN":
+            self.recipient_input.setVisible(False)  # Hide recipient input for "IN"
+        else:
+            self.recipient_input.setVisible(True)  # Show recipient input for "OUT"
+            if self.recipient_input.currentText() == "Select Client":
+                self.recipient_input.setCurrentText("")
+    def add_new_client(self, client_name):
+        # Function to add a new client to the database
+        from ui.client.dialog_add_client import AddClientDialog
+        dialog = AddClientDialog(self)
+        dialog.name_input.setText(client_name)
+        if dialog.exec_():
+            # After adding the client, refresh the client list
+            self.recipient_input.clear()
+            self.recipient_input.addItem("Select Client")
+            self.clients = fetch_all_clients()
+            for client in self.clients:
+                self.recipient_input.addItem(client[1], client[0])  # client name, client id
+            return dialog.get_new_client_id()
+        return None
