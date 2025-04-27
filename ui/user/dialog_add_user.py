@@ -18,31 +18,31 @@ class AddUserDialog(QDialog):
 
         # --- Username ---
         self.username_input = QLineEdit()
-        self.username_input.setPlaceholderText("Enter username")
-        layout.addWidget(QLabel("Username:"))
+        self.username_input.setPlaceholderText("Entrer le nom")
+        layout.addWidget(QLabel("Nom d'utilisateur:"))
         layout.addWidget(self.username_input)
 
         # --- Email ---
         self.email_input = QLineEdit()
-        self.email_input.setPlaceholderText("Enter email")
+        self.email_input.setPlaceholderText("Entrer email")
         layout.addWidget(QLabel("Email:"))
         layout.addWidget(self.email_input)
 
         # --- Password ---
         self.password_input = QLineEdit()
-        self.password_input.setPlaceholderText("Enter password")
+        self.password_input.setPlaceholderText("Enter mot de passe")
         self.password_input.setEchoMode(QLineEdit.Password)
         layout.addWidget(QLabel("Password:"))
         layout.addWidget(self.password_input)
 
         # --- Is Admin ---
-        self.admin_checkbox = QCheckBox("Grant admin rights")
+        self.admin_checkbox = QCheckBox("Accorder les droits d'admin")
         layout.addWidget(self.admin_checkbox)
 
         # --- Buttons ---
         button_layout = QHBoxLayout()
-        btn_add = QPushButton("Add")
-        btn_cancel = QPushButton("Cancel")
+        btn_add = QPushButton("Ajouter")
+        btn_cancel = QPushButton("Annuler")
         btn_add.clicked.connect(self.add_user)
         btn_cancel.clicked.connect(self.reject)
         button_layout.addWidget(btn_add)
@@ -58,7 +58,7 @@ class AddUserDialog(QDialog):
         is_admin = self.admin_checkbox.isChecked()
 
         if not username or not email or not password:
-            QMessageBox.warning(self, "Validation Error", "All fields are required.")
+            QMessageBox.warning(self, "Erreur de Validation", "Tous les champs sont requis.")
             return
 
         # Hash the password
@@ -67,7 +67,7 @@ class AddUserDialog(QDialog):
 
         try:
             insert_user(username, email, password_hash, is_admin)
-            QMessageBox.information(self, "Success", f"User '{username}' added successfully.")
+            QMessageBox.information(self, "Succès", f"Utilisateur '{username}' ajouté.")
             self.accept()
         except Exception as e:
-            QMessageBox.critical(self, "Error", f"Failed to add user:\n{str(e)}")
+            QMessageBox.critical(self, "Erreur", f"Echec d'ajout:\n{str(e)}")

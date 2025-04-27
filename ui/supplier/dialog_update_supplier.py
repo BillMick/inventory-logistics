@@ -4,7 +4,7 @@ from db.manager import update_supplier_by_id
 class UpdateSupplierDialog(QDialog):
     def __init__(self, parent=None, supplier=None):
         super().__init__(parent)
-        self.setWindowTitle("Update Supplier")
+        self.setWindowTitle("Mise à jour Fournisseur")
         self.supplier_id = supplier["id"]
 
         layout = QVBoxLayout()
@@ -15,8 +15,8 @@ class UpdateSupplierDialog(QDialog):
         self.contact_input = QLineEdit(supplier["contact"])
         self.email_input = QLineEdit(supplier["email"])
 
-        form.addRow("Name", self.name_input)
-        form.addRow("Fiscal ID", self.fiscal_id_input)
+        form.addRow("Nom", self.name_input)
+        form.addRow("ID Fiscal", self.fiscal_id_input)
         form.addRow("Contact", self.contact_input)
         form.addRow("Email", self.email_input)
 
@@ -38,7 +38,7 @@ class UpdateSupplierDialog(QDialog):
                 self.contact_input.text(),
                 self.email_input.text()
             )
-            QMessageBox.information(self, "Success", "Supplier updated successfully.")
+            QMessageBox.information(self, "Succès", "Fournisseur mis à jour.")
             self.accept()
         except Exception as e:
-            QMessageBox.critical(self, "Error", f"Failed to update supplier.\n{e}")
+            QMessageBox.critical(self, "Erreur", f"Echec de mise à jour.\n{e}")

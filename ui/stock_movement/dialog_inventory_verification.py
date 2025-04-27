@@ -10,14 +10,14 @@ from db.manager import fetch_all_products, get_theoretical_stock
 class InventoryVerificationDialog(QDialog):
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.setWindowTitle("Inventory Verification")
+        self.setWindowTitle("Vérification Inventaire")
         self.resize(800, 600)
 
         self.products = fetch_all_products()
         self.table = QTableWidget()
         self.table.setRowCount(len(self.products))
         self.table.setColumnCount(4)
-        self.table.setHorizontalHeaderLabels(["Product", "Theoretical Qty", "Actual Qty", "Discrepancy"])
+        self.table.setHorizontalHeaderLabels(["Produit", "Qté théorique", "Qté actuelle", "Différence"])
 
         for row, product in enumerate(self.products):
             product_name = product[1]
@@ -27,7 +27,7 @@ class InventoryVerificationDialog(QDialog):
             self.table.setItem(row, 1, QTableWidgetItem(str(theoretical_qty)))
 
             actual_qty_input = QLineEdit()
-            actual_qty_input.setPlaceholderText("Enter actual qty")
+            actual_qty_input.setPlaceholderText("Entrer qté actuelle")
             actual_qty_input.textChanged.connect(lambda _, r=row: self.update_discrepancy(r))
             self.table.setCellWidget(row, 2, actual_qty_input)
             self.table.setItem(row, 3, QTableWidgetItem(""))
@@ -37,11 +37,11 @@ class InventoryVerificationDialog(QDialog):
 
         # Export buttons
         btn_layout = QHBoxLayout()
-        btn_export_pdf = QPushButton("Export to PDF")
+        btn_export_pdf = QPushButton("Exporter PDF")
         btn_export_pdf.clicked.connect(self.export_pdf)
-        btn_export_excel = QPushButton("Export to Excel")
+        btn_export_excel = QPushButton("Exporter Excel")
         btn_export_excel.clicked.connect(self.export_excel)
-        btn_close = QPushButton("Close")
+        btn_close = QPushButton("Fermer")
         btn_close.clicked.connect(self.accept)
 
         btn_layout.addWidget(btn_export_pdf)
@@ -66,7 +66,7 @@ class InventoryVerificationDialog(QDialog):
                 item.setBackground(QColor('lightcoral'))
             self.table.setItem(row, 3, item)
         except ValueError:
-            item = QTableWidgetItem("Invalid")
+            item = QTableWidgetItem("Invalide")
             item.setBackground(QColor('khaki'))
             self.table.setItem(row, 3, item)
 
@@ -88,12 +88,12 @@ class InventoryVerificationDialog(QDialog):
                 filepath += ".xlsx"
             
             try:
-                df = pd.DataFrame(data, columns=["Product", "Theoretical Qty", "Actual Qty", "Discrepancy"])
+                df = pd.DataFrame(data, columns=["Produit", "Qté théorique", "Qté actuelle", "Différence"])
                 df = pd.concat([df], ignore_index=True)
                 df.to_excel(filepath, index=False)
-                QMessageBox.information(self, "Export Successful", f"Excel file saved to:\n{filepath}")
+                QMessageBox.information(self, "Exportation réussie", f"{filepath} enregistré")
             except Exception as e:
-                QMessageBox.critical(self, "Export Failed", f"An error occurred:\n{str(e)}")
+                QMessageBox.critical(self, "Echec de l'exportation", f"Erreur:\n{str(e)}")
 
 
 
@@ -118,7 +118,7 @@ class InventoryVerificationDialog(QDialog):
 
             # Timestamp
             c.setFont("Helvetica", 10)
-            c.drawString(50, height - 70, f"Generated on: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+            c.drawString(50, height - 70, f"Généré le: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
 
             y -= 60
             c.setFont("Helvetica", 12)

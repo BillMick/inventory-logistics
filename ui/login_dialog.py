@@ -16,7 +16,7 @@ class LoginDialog(QDialog):
         self.password_input.setEchoMode(QLineEdit.Password)
 
         form_layout.addRow("Email:", self.email_input)
-        form_layout.addRow("Password:", self.password_input)
+        form_layout.addRow("Mot de passe:", self.password_input)
 
         layout.addLayout(form_layout)
 
@@ -36,4 +36,4 @@ class LoginDialog(QDialog):
             self.user_data = user
             self.accept()
         else:
-            QMessageBox.warning(self, "Login Failed", "Invalid email or password.")
+            QMessageBox.warning(self, "Login échoué", "email ou mot de passe incorrect.")

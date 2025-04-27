@@ -20,7 +20,7 @@ class BarChartWidget(QWidget):
 
         # Validate data before plotting
         if not data or all(value == 0 for value in data.values()):
-            self.ax.text(0.5, 0.5, 'No data available', 
+            self.ax.text(0.5, 0.5, 'Aucune donnée disponible', 
                         horizontalalignment='center', 
                         verticalalignment='center',
                         transform=self.ax.transAxes)
@@ -32,7 +32,7 @@ class BarChartWidget(QWidget):
 
             self.ax.bar(products, values, color="#3498db")
             self.ax.set_title(title)
-            self.ax.set_ylabel("Quantity")            
+            self.ax.set_ylabel("Quantité")            
             self.ax.set_xticks(range(len(products)))  # Ensure alignment
             self.ax.set_xticklabels(products, rotation=45, ha='right')
             self.ax.grid()

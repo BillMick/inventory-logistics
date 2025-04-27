@@ -4,7 +4,7 @@ from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.figure import Figure
 
 class PieChartWidget(QWidget):
-    def __init__(self, data, title="Statistics"):
+    def __init__(self, data, title="Statistiques"):
         super().__init__()
         layout = QVBoxLayout()
         self.figure = Figure()
@@ -20,7 +20,7 @@ class PieChartWidget(QWidget):
         
         # Validate data before plotting
         if not data or all(value == 0 for value in data.values()):
-            ax.text(0.5, 0.5, 'No data available', horizontalalignment='center', verticalalignment='center')
+            ax.text(0.5, 0.5, 'Aucune donnée disponible', horizontalalignment='center', verticalalignment='center')
         else:
             labels = list(data.keys())
             sizes = list(data.values())

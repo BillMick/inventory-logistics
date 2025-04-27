@@ -11,7 +11,7 @@ import pandas as pd
 class SupplierDashboard(QWidget):
     def __init__(self):
         super().__init__()
-        self.setWindowTitle("Supplier Management Dashboard")
+        self.setWindowTitle("Dashboard Fournisseur")
         self.showMaximized()
 
         layout = QVBoxLayout()
@@ -19,8 +19,8 @@ class SupplierDashboard(QWidget):
 
         # --- Stats Section ---
         stats_layout = QHBoxLayout()
-        self.total_suppliers = self.create_stat_card("Total Suppliers", "0")
-        self.latest_supplier = self.create_stat_card("Last Supplier", "-")
+        self.total_suppliers = self.create_stat_card("Fournisseur Total", "0")
+        self.latest_supplier = self.create_stat_card("Récent Fournisseur", "-")
 
         stats_layout.addWidget(self.total_suppliers)
         stats_layout.addWidget(self.latest_supplier)
@@ -31,31 +31,31 @@ class SupplierDashboard(QWidget):
         filter_layout = QHBoxLayout()
 
         self.name_filter = QLineEdit()
-        self.name_filter.setPlaceholderText("Filter by name...")
+        self.name_filter.setPlaceholderText("Filtrer par nom...")
         self.name_filter.textChanged.connect(self.load_suppliers)
 
-        btn_add = QPushButton("Add Supplier")
+        btn_add = QPushButton("Ajouter Fournisseur")
         btn_add.clicked.connect(self.add_supplier)
         btn_add.setStyleSheet("background-color: #007bff; color: white")
         
-        btn_import = QPushButton("Import from Excel")
+        btn_import = QPushButton("Importer Excel")
         btn_import.clicked.connect(self.import_suppliers_from_excel)
         btn_import.setStyleSheet("background-color: #20c997; color: white")
         
-        btn_export = QPushButton("Export to Excel")
+        btn_export = QPushButton("Exporter Excel")
         btn_export.clicked.connect(self.export_suppliers_to_excel)
         btn_export.setStyleSheet("background-color: #28a745; color: white")
         
-        btn_export_pdf = QPushButton("Export to PDF")
+        btn_export_pdf = QPushButton("Exporter PDF")
         btn_export_pdf.setStyleSheet("background-color: #6c757d; color: white")
         btn_export_pdf.clicked.connect(self.export_pdf_report)
 
 
-        btn_refresh = QPushButton("Refresh")
+        btn_refresh = QPushButton("Actualiser")
         btn_refresh.clicked.connect(self.load_suppliers)
         btn_refresh.setStyleSheet("background-color: #17a2b8; color: white")
 
-        btn_quit = QPushButton("Quit")
+        btn_quit = QPushButton("Fermer")
         btn_quit.clicked.connect(self.close)
         btn_quit.setStyleSheet("background-color: #dc3545; color: white")
 
@@ -73,7 +73,7 @@ class SupplierDashboard(QWidget):
         # --- Table ---
         self.table = QTableWidget()
         self.table.setColumnCount(8)
-        self.table.setHorizontalHeaderLabels(["ID", "Name", "Fiscal ID", "Contact", "Email", "Address" , "Created At", "Action"])
+        self.table.setHorizontalHeaderLabels(["ID", "Nom", "ID Fiscal", "Contact", "Email", "Adresse" , "Ajouté le", "Action"])
         self.table.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         self.table.setSortingEnabled(True)
         self.table.cellDoubleClicked.connect(self.edit_supplier)
@@ -143,7 +143,7 @@ class SupplierDashboard(QWidget):
             total += 1
             last_name = name
             # Add Delete button in Action column
-            btn_delete = QPushButton("Delete")
+            btn_delete = QPushButton("Supprimer")
             btn_delete.setStyleSheet("background-color: #dc3545; color: white")
             btn_delete.clicked.connect(partial(self.delete_supplier, supplier_id=supplier_id))
             self.table.setCellWidget(row, 7, btn_delete)
@@ -160,17 +160,17 @@ class SupplierDashboard(QWidget):
     def delete_supplier(self, supplier_id):
         confirm = QMessageBox.question(
             self,
-            "Confirm Delete",
-            "Are you sure you want to delete this supplier?",
+            "Confirmer la Suppression",
+            "Êtes-vous sûr de vouloir supprimer ce fournisseur ?",
             QMessageBox.Yes | QMessageBox.No
         )
         if confirm == QMessageBox.Yes:
             try:
                 delete_supplier_by_id(supplier_id)
-                QMessageBox.information(self, "Deleted", "Supplier deleted successfully.")
+                QMessageBox.information(self, "Suppression", "Fournisseur supprimé.")
                 self.load_suppliers()
             except Exception as e:
-                QMessageBox.critical(self, "Error", f"Failed to delete supplier:\n{str(e)}")
+                QMessageBox.critical(self, "Error", f"Echec de suppression du fournisseur:\n{str(e)}")
 
     def edit_supplier(self, row, column):
         supplier_data = {
@@ -196,10 +196,10 @@ class SupplierDashboard(QWidget):
         from datetime import datetime
 
         if self.table.rowCount() == 0:
-            QMessageBox.warning(self, "Export Failed", "No supplier data to export.")
+            QMessageBox.warning(self, "Echec de l'exportation", "Pas de données fournisseur à exporter.")
             return
 
-        filepath, _ = QFileDialog.getSaveFileName(self, "Save PDF", "", "PDF Files (*.pdf)")
+        filepath, _ = QFileDialog.getSaveFileName(self, "Enregistrer PDF", "", "PDF Files (*.pdf)")
         if not filepath:
             return
         if not filepath.endswith(".pdf"):
@@ -210,10 +210,10 @@ class SupplierDashboard(QWidget):
 
         # --- Title and Timestamp ---
         c.setFont("Helvetica-Bold", 16)
-        c.drawCentredString(width / 2, height - 50, "Supplier Report")
+        c.drawCentredString(width / 2, height - 50, "Rapport Fournisseur")
 
         c.setFont("Helvetica", 10)
-        c.drawString(50, height - 70, f"Generated on: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+        c.drawString(50, height - 70, f"Généré le: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
 
         y = height - 100
 
@@ -234,7 +234,7 @@ class SupplierDashboard(QWidget):
         c.showPage()
 
         # --- Table Data ---
-        headers = ["ID", "Name", "Fiscal ID", "Contact", "Email", "Created At"]
+        headers = ["ID", "Nom", "ID Fiscal", "Contact", "Email", "Ajouté le"]
         data = [headers]
 
         for row in range(self.table.rowCount()):
@@ -262,10 +262,10 @@ class SupplierDashboard(QWidget):
             c.showPage()
 
         c.save()
-        QMessageBox.information(self, "Export Successful", f"PDF report saved to:\n{filepath}")
+        QMessageBox.information(self, "Exportation réussie", f"{filepath} enregistré")
 
     def import_suppliers_from_excel(self):
-        file_path, _ = QFileDialog.getOpenFileName(self, "Open Excel File", "", "Excel Files (*.xlsx)")
+        file_path, _ = QFileDialog.getOpenFileName(self, "Ouvrir fichier Excel", "", "Excel Files (*.xlsx)")
         if not file_path:
             return
         
@@ -273,28 +273,28 @@ class SupplierDashboard(QWidget):
             df = pd.read_excel(file_path)
 
             # Make sure the required columns exist in the file
-            required_columns = ["Name", "Fiscal ID", "Contact", "Email", "Address"]
+            required_columns = ["Nom", "ID Fiscal", "Contact", "Email", "Adresse"]
             if not all(col in df.columns for col in required_columns):
-                QMessageBox.warning(self, "Invalid File", "The Excel file does not contain the required columns.")
+                QMessageBox.warning(self, "Fichier invalide", "Structure nom respectée.")
                 return
 
             # Insert each supplier into the database
             for _, row in df.iterrows():
-                name = row["Name"]
-                fiscal_id = row["Fiscal ID"]
+                name = row["Nom"]
+                fiscal_id = row["ID Fiscal"]
                 contact = row["Contact"]
                 email = row["Email"]
-                address = row["Address"]
+                address = row["Adresse"]
                 
                 # Insert supplier into the database
                 insert_supplier(name, fiscal_id, contact, email, address)
             
             # Reload the supplier list after import
             self.load_suppliers()
-            QMessageBox.information(self, "Import Successful", "Suppliers imported successfully.")
+            QMessageBox.information(self, "Importation réussie", "Fournisseurs importés.")
         
         except Exception as e:
-            QMessageBox.critical(self, "Import Failed", f"An error occurred while importing suppliers:\n{str(e)}")
+            QMessageBox.critical(self, "Echec d'importation", f"Erreur:\n{str(e)}")
             
     def export_suppliers_to_excel(self):
         # Get the suppliers data from the table
@@ -311,7 +311,7 @@ class SupplierDashboard(QWidget):
             suppliers_data.append([supplier_id, name, fiscal_id, contact, email, address, created_at])
         
         if not suppliers_data:
-            QMessageBox.warning(self, "No Data", "There is no data to export.")
+            QMessageBox.warning(self, "Echec de l'exportation", "Pas de données fournisseur à exporter.")
             return
 
         # Open a save file dialog to select the destination for the Excel file
@@ -324,8 +324,8 @@ class SupplierDashboard(QWidget):
 
         # Create a DataFrame and save it to an Excel file
         try:
-            df = pd.DataFrame(suppliers_data, columns=["ID", "Name", "Fiscal ID", "Contact", "Email", "Address" ,"Created At"])
+            df = pd.DataFrame(suppliers_data, columns=["ID", "Nom", "ID Fiscal", "Contact", "Email", "Adresse" ,"Ajouté le"])
             df.to_excel(file_path, index=False)
-            QMessageBox.information(self, "Export Successful", f"Suppliers exported to:\n{file_path}")
+            QMessageBox.information(self, "Exportation réussie", f"{file_path} enregistré")
         except Exception as e:
-            QMessageBox.critical(self, "Export Failed", f"An error occurred while exporting suppliers:\n{str(e)}")
+            QMessageBox.critical(self, "Echec de l'exportation", f"Erreur:\n{str(e)}")

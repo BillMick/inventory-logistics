@@ -13,7 +13,7 @@ import pandas as pd
 class ProductDashboard(QWidget):
     def __init__(self):
         super().__init__()
-        self.setWindowTitle("Product Dashboard")
+        self.setWindowTitle("Dashboard Produits")
         self.showMaximized()
 
         layout = QVBoxLayout()
@@ -23,11 +23,11 @@ class ProductDashboard(QWidget):
         self.kpi_layout = QHBoxLayout()
         self.kpi_layout.setSpacing(10)
 
-        self.total_label = self.create_stat_card("Total Products", "0")
+        self.total_label = self.create_stat_card("Total Produits", "0")
         self.stock_label = self.create_stat_card("Total Stock", "0", "#28a745")
-        self.below_label = self.create_stat_card("Below Threshold", "0", "#ffc107")
-        self.out_label = self.create_stat_card("Out of Stock", "0", "#dc3545")
-        self.value_label = self.create_stat_card("Stock Value", "$0.00", "#6f42c1")
+        self.below_label = self.create_stat_card("Sous le seuil", "0", "#ffc107")
+        self.out_label = self.create_stat_card("En rupture", "0", "#dc3545")
+        self.value_label = self.create_stat_card("Valeur Stock", "0.00 MAD", "#6f42c1")
 
         self.kpi_layout.addWidget(self.total_label)
         self.kpi_layout.addWidget(self.stock_label)
@@ -43,29 +43,29 @@ class ProductDashboard(QWidget):
 
         self.name_filter = QLineEdit()
         self.is_archived_filter = QComboBox()
-        self.is_archived_filter.addItems(["Not Archived", "Archived", "All"])
+        self.is_archived_filter.addItems(["Non archivé", "Archivé", "Tout"])
         self.is_archived_filter.currentIndexChanged.connect(self.load_products)
 
-        self.name_filter.setPlaceholderText("Filter by product name...")
+        self.name_filter.setPlaceholderText("Filtrer par nom...")
         self.name_filter.textChanged.connect(self.load_products)
         
-        btn_add = QPushButton("Add Product")
+        btn_add = QPushButton("Ajouter Produit")
         btn_add.clicked.connect(self.add_product)
         btn_add.setStyleSheet("background-color: #007bff; color: white;")
         
-        btn_import = QPushButton("Import from Excel")
+        btn_import = QPushButton("Importer Excel")
         btn_import.clicked.connect(self.import_products)
         btn_import.setStyleSheet("background-color: #20c997; color: white;")
         
-        btn_export = QPushButton("Export to Excel")
+        btn_export = QPushButton("Exporter Excel")
         btn_export.clicked.connect(self.export_to_excel)
         btn_export.setStyleSheet("background-color: #28a745; color: white;")
         
-        btn_pdf = QPushButton("Export to PDF")
+        btn_pdf = QPushButton("Exporter PDF")
         btn_pdf.clicked.connect(self.export_pdf_report)
         btn_pdf.setStyleSheet("background-color: #6c757d; color: white;")
 
-        btn_refresh = QPushButton("Refresh")
+        btn_refresh = QPushButton("Actualiser")
         btn_refresh.clicked.connect(self.load_products)
         btn_refresh.setStyleSheet("background-color: #17a2b8; color: white;")
 
@@ -85,8 +85,8 @@ class ProductDashboard(QWidget):
         self.table = QTableWidget()
         self.table.setColumnCount(13)
         self.table.setHorizontalHeaderLabels([
-            "ID", "Name", "Code", "Category", "Unit", "Price", 
-            "Supplier", "Threshold", "Stock", "Total Value", "Added at", 
+            "ID", "Nom", "Code", "Categorie", "Unité", "Prix", 
+            "Fournisseur", "Seuil", "Stock", "Valeur totale", "Ajouté le", 
             "Description", "Action"
         ])
         self.table.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
@@ -152,9 +152,9 @@ class ProductDashboard(QWidget):
 
             is_archived = product[11]  # Assuming index 11 is is_archived, update if needed
 
-            if archived_filter == "Not Archived" and is_archived:
+            if archived_filter == "Non archivé" and is_archived:
                 continue
-            elif archived_filter == "Archived" and not is_archived:
+            elif archived_filter == "Archivé" and not is_archived:
                 continue
 
             filtered_products.append(product)
@@ -173,7 +173,7 @@ class ProductDashboard(QWidget):
             total_value = stock * price
             
             # Insert total value in column 9 (after Stock)
-            total_item = QTableWidgetItem(f"${total_value:,.2f}")
+            total_item = QTableWidgetItem(f"{total_value:,.2f} MAD")
             total_item.setTextAlignment(Qt.AlignCenter)
             self.table.setItem(row_idx, 9, total_item)
 
@@ -201,7 +201,7 @@ class ProductDashboard(QWidget):
             inventory_value += stock * price
             
             # Add Archive/Unarchive button
-            action_btn = QPushButton("Unarchive" if product[11] else "Archive")  # Assuming is_archived is at index 11
+            action_btn = QPushButton("Désarchiver" if product[11] else "Archiver")
             action_btn.setStyleSheet("background-color: #6c757d; color: white;")
             action_btn.clicked.connect(lambda checked, pid=product[0], archived=product[11]: self.toggle_archive(pid, archived))
             self.table.setCellWidget(row_idx, 12, action_btn)
@@ -211,18 +211,18 @@ class ProductDashboard(QWidget):
         self.stock_label.value_label.setText(str(total_stock))
         self.below_label.value_label.setText(str(below_threshold))
         self.out_label.value_label.setText(str(out_of_stock))
-        self.value_label.value_label.setText(f"${inventory_value:,.2f}")
+        self.value_label.value_label.setText(f"{inventory_value:,.2f} MAD")
 
 
     def import_products(self):
-        path, _ = QFileDialog.getOpenFileName(self, "Select Excel File", "", "Excel Files (*.xlsx *.xls)")
+        path, _ = QFileDialog.getOpenFileName(self, "Sélectionner fichier Excel", "", "Excel Files (*.xlsx *.xls)")
         if path:
             try:
                 import_products_from_excel(path)
-                QMessageBox.information(self, "Success", "Products imported successfully!")
+                QMessageBox.information(self, "Succès", "Produits importés!")
                 self.load_products()
             except Exception as e:
-                QMessageBox.critical(self, "Error", f"Failed to import products:\n{str(e)}")
+                QMessageBox.critical(self, "Error", f"Echec de l'importation des produits:\n{str(e)}")
 
     def add_product(self):
         dialog = AddProductDialog(self)
@@ -252,7 +252,7 @@ class ProductDashboard(QWidget):
         col_count = self.table.columnCount()
 
         if row_count == 0:
-            QMessageBox.warning(self, "Export Failed", "No data to export.")
+            QMessageBox.warning(self, "Echec de l'exportation", "Pas de données produit à exporter.")
             return
 
         # Extract data from QTableWidget
@@ -276,9 +276,9 @@ class ProductDashboard(QWidget):
                 filepath += ".xlsx"
             try:
                 df.to_excel(filepath, index=False, engine='openpyxl')
-                QMessageBox.information(self, "Export Successful", f"Products exported to:\n{filepath}")
+                QMessageBox.information(self, "Exportation réussie", f"Produits exportés:\n{filepath}")
             except Exception as e:
-                QMessageBox.critical(self, "Export Error", f"An error occurred:\n{str(e)}")
+                QMessageBox.critical(self, "Exportation échouée", f"Erreur:\n{str(e)}")
         self.load_products()
 
     def toggle_archive(self, product_id, currently_archived):
@@ -286,7 +286,7 @@ class ProductDashboard(QWidget):
             update_product_archived_status(product_id, not currently_archived)
             self.load_products()
         except Exception as e:
-            QMessageBox.critical(self, "Error", f"Failed to update archive status:\n{str(e)}")
+            QMessageBox.critical(self, "Error", f"Echec de mise à jour:\n{str(e)}")
             
     def export_pdf_report(self):
         from reportlab.pdfgen import canvas
@@ -297,10 +297,10 @@ class ProductDashboard(QWidget):
         from PyQt5.QtWidgets import QFileDialog, QMessageBox
 
         if self.table.rowCount() == 0:
-            QMessageBox.warning(self, "Export Failed", "No data to export.")
+            QMessageBox.warning(self, "Echec de l'exportation", "Pas de données produit à exporter.")
             return
 
-        filepath, _ = QFileDialog.getSaveFileName(self, "Save PDF", "", "PDF Files (*.pdf)")
+        filepath, _ = QFileDialog.getSaveFileName(self, "Enregistrer PDF", "", "PDF Files (*.pdf)")
         if not filepath:
             return
         if not filepath.endswith(".pdf"):
@@ -311,10 +311,10 @@ class ProductDashboard(QWidget):
 
         # --- Title and Timestamp ---
         c.setFont("Helvetica-Bold", 16)
-        c.drawCentredString(width / 2, height - 50, "Product Inventory Report")
+        c.drawCentredString(width / 2, height - 50, "Rapport des produits")
 
         c.setFont("Helvetica", 10)
-        c.drawString(50, height - 70, f"Generated on: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+        c.drawString(50, height - 70, f"Généré le: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
 
 
         y = height - 100
@@ -369,4 +369,4 @@ class ProductDashboard(QWidget):
             c.showPage()
 
         c.save()
-        QMessageBox.information(self, "Export Successful", f"PDF report saved to:\n{filepath}")
+        QMessageBox.information(self, "Exportation réussie", f"{filepath} enregistré.")

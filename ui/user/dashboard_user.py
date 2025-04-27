@@ -12,7 +12,7 @@ from functools import partial
 class UserDashboard(QWidget):
     def __init__(self):
         super().__init__()
-        self.setWindowTitle("User Management Dashboard")
+        self.setWindowTitle("Dashboard Utilisateur")
         self.showMaximized()
 
         layout = QVBoxLayout()
@@ -20,9 +20,9 @@ class UserDashboard(QWidget):
 
         # --- KPI Section ---
         self.stats_layout = QHBoxLayout()
-        self.total_users = self.create_stat_card("Total Users", "0")
+        self.total_users = self.create_stat_card("Utilisateurs Total", "0")
         self.admins = self.create_stat_card("Admins", "0", "#ffc107")
-        self.last_user = self.create_stat_card("Last User", "-")
+        self.last_user = self.create_stat_card("Récent Utilisateur", "-")
 
         self.stats_layout.addWidget(self.total_users)
         self.stats_layout.addWidget(self.admins)
@@ -35,30 +35,30 @@ class UserDashboard(QWidget):
         filter_layout = QHBoxLayout()
 
         self.role_filter = QComboBox()
-        self.role_filter.addItems(["All", "admin", "user"])
+        self.role_filter.addItems(["Tout", "admin", "utilisateur"])
         self.role_filter.currentIndexChanged.connect(self.load_users)
 
         self.username_filter = QLineEdit()
-        self.username_filter.setPlaceholderText("Filter by username...")
+        self.username_filter.setPlaceholderText("Filtrer par nom d'utilisateur...")
         self.username_filter.textChanged.connect(self.load_users)
 
-        btn_refresh = QPushButton("Refresh")
+        btn_refresh = QPushButton("Actualiser")
         btn_refresh.clicked.connect(self.load_users)
         btn_refresh.setStyleSheet("background-color: #17a2b8; color: white")
 
-        btn_add = QPushButton("Add User")
+        btn_add = QPushButton("Ajouter Utilisateur")
         btn_add.clicked.connect(self.add_user)
         btn_add.setStyleSheet("background-color: #007bff; color: white")
         
-        btn_pdf = QPushButton("Export to PDF")
+        btn_pdf = QPushButton("Exporter PDF")
         btn_pdf.clicked.connect(self.export_pdf_report)
         btn_pdf.setStyleSheet("background-color: #6c757d; color: white;")
 
-        btn_quit = QPushButton("Quit")
+        btn_quit = QPushButton("Fermer")
         btn_quit.setStyleSheet("background-color: #dc3545; color: white")
         btn_quit.clicked.connect(self.close)
 
-        filter_layout.addWidget(QLabel("Role:"))
+        filter_layout.addWidget(QLabel("Rôle:"))
         filter_layout.addWidget(self.role_filter)
         filter_layout.addStretch()
         filter_layout.addWidget(self.username_filter)
@@ -73,7 +73,7 @@ class UserDashboard(QWidget):
         # --- Table Section ---
         self.table = QTableWidget()
         self.table.setColumnCount(6)
-        self.table.setHorizontalHeaderLabels(["ID", "Username", "Email", "Role","Created At", "Action"])
+        self.table.setHorizontalHeaderLabels(["ID", "Nom", "Email", "Role", "Ajouté le", "Action"])
         self.table.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         self.table.setSortingEnabled(True)
         self.table.horizontalHeader().setStretchLastSection(True)
@@ -128,9 +128,9 @@ class UserDashboard(QWidget):
         if users:
             for user in users:
                 user_id, username, email, is_admin, created_at = user
-                role_str = "admin" if is_admin else "user"
+                role_str = "admin" if is_admin else "utilisateur"
 
-                if selected_role != "All" and role_str != selected_role:
+                if selected_role != "Tout" and role_str != selected_role:
                     continue
                 if username_filter_text and username_filter_text not in username.lower():
                     continue
@@ -144,7 +144,7 @@ class UserDashboard(QWidget):
                 self.table.setItem(row, 4, QTableWidgetItem(str(created_at)))
 
                 # Add Delete button in Action column
-                btn_delete = QPushButton("Delete")
+                btn_delete = QPushButton("Supprimer")
                 btn_delete.setStyleSheet("background-color: #dc3545; color: white;")
                 btn_delete.clicked.connect(partial(self.delete_user, user_id=user_id))
                 self.table.setCellWidget(row, 5, btn_delete)
@@ -161,17 +161,17 @@ class UserDashboard(QWidget):
     def delete_user(self, user_id):
         confirm = QMessageBox.question(
             self,
-            "Confirm Delete",
-            "Are you sure you want to delete this user?",
+            "Confirmer la Suppression",
+            "Êtes-vous sûr de vouloir supprimer cet utilisateur ?",
             QMessageBox.Yes | QMessageBox.No
         )
         if confirm == QMessageBox.Yes:
             try:
                 delete_user_by_id(user_id)
-                QMessageBox.information(self, "Deleted", "User deleted successfully.")
+                QMessageBox.information(self, "Suppression", "Utilisateur supprimé.")
                 self.load_users()
             except Exception as e:
-                QMessageBox.critical(self, "Error", f"Failed to delete user:\n{str(e)}")
+                QMessageBox.critical(self, "Error", f"Echec de suppression de l'utilisateur:\n{str(e)}")
 
     def add_user(self):
         from ui.user.dialog_add_user import AddUserDialog
@@ -188,10 +188,10 @@ class UserDashboard(QWidget):
         from datetime import datetime
 
         if self.table.rowCount() == 0:
-            QMessageBox.warning(self, "Export Failed", "No data to export.")
+            QMessageBox.warning(self, "Echec de l'exportation", "Pas de données utilisateur à exporter.")
             return
 
-        filepath, _ = QFileDialog.getSaveFileName(self, "Save PDF", "", "PDF Files (*.pdf)")
+        filepath, _ = QFileDialog.getSaveFileName(self, "Enregistrer PDF", "", "PDF Files (*.pdf)")
         if not filepath:
             return
         if not filepath.endswith(".pdf"):
@@ -205,7 +205,7 @@ class UserDashboard(QWidget):
         c.drawCentredString(width / 2, height - 50, "User Report")
 
         c.setFont("Helvetica", 10)
-        c.drawString(50, height - 70, f"Generated on: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+        c.drawString(50, height - 70, f"Généré le: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
 
         y = height - 100
 
@@ -227,7 +227,7 @@ class UserDashboard(QWidget):
         c.showPage()
 
         # --- Table Headers + Data ---
-        headers = ["ID", "Username", "Email", "Role", "Created At"]
+        headers = ["ID", "Nom", "Email", "Role", "Ajouté le"]
         data = [headers]
 
         for row in range(self.table.rowCount()):

@@ -7,16 +7,16 @@ from db.manager import fetch_all_products, insert_stock_movement, fetch_all_clie
 class AddMovementDialog(QDialog):
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.setWindowTitle("Add Stock Movement")
+        self.setWindowTitle("Ajouter mouvement de stock")
 
         layout = QVBoxLayout()
         form = QFormLayout()
 
-        # Product selection dropdown
+        # Produit selection dropdown
         self.product_dropdown = QComboBox()
         products = fetch_all_products()
         for product in products:
-            self.product_dropdown.addItem(f"{product[1]} ({product[2]})", product[0])  # Product name and code
+            self.product_dropdown.addItem(f"{product[1]} ({product[2]})", product[0])  # Produit name and code
 
         # Type dropdown (IN or OUT)
         self.type_dropdown = QComboBox()
@@ -36,7 +36,7 @@ class AddMovementDialog(QDialog):
         # Editable client selection dropdown (existing or custom)
         self.recipient_input = QComboBox()
         self.recipient_input.setEditable(True)  # Make it editable
-        self.recipient_input.addItem("Select Client")  # Default prompt text
+        self.recipient_input.addItem("Sélectionner client")  # Default prompt text
         self.clients = fetch_all_clients()
         for client in self.clients:
             self.recipient_input.addItem(client[1], client[0])  # client name, client id
@@ -49,12 +49,12 @@ class AddMovementDialog(QDialog):
         self.quantity_input.setMaximum(9999999)
 
         # Add form rows
-        form.addRow("Product", self.product_dropdown)
+        form.addRow("Produit", self.product_dropdown)
         form.addRow("Type", self.type_dropdown)
         form.addRow("Label", self.label_input)
-        form.addRow("Recipient", self.recipient_input)
-        form.addRow("Quantity", self.quantity_input)
-        form.addRow("Comment", self.comment_input)
+        form.addRow("Récepteur", self.recipient_input)
+        form.addRow("Quantité", self.quantity_input)
+        form.addRow("Commentaire", self.comment_input)
 
         layout.addLayout(form)
 
@@ -75,8 +75,8 @@ class AddMovementDialog(QDialog):
             recipient = self.recipient_input.currentText()
             quantity = self.quantity_input.value()
             
-            if movement_type == "OUT" and recipient == "Select Client":
-                QMessageBox.warning(self, "Warning", "Please select a valid recipient or enter a new client name.")
+            if movement_type == "OUT" and recipient == "Sélectionner client":
+                QMessageBox.warning(self, "Warning", "Sélectionnez ou ajoutez un client.")
                 return
 
             # Check if recipient exists in the list or is new
@@ -97,25 +97,24 @@ class AddMovementDialog(QDialog):
             # Insert the stock movement
             insert_stock_movement(product_id, movement_type, label, comment, recipient, quantity)
 
-            QMessageBox.information(self, "Success", "Stock movement added successfully.")
+            QMessageBox.information(self, "Success", "Mouvement de Stock ajouté.")
             self.accept()
         except Exception as e:
-            QMessageBox.critical(self, "Error", f"Failed to add movement: {e}")
+            QMessageBox.critical(self, "Error", f"Echec d'ajout: {e}")
     
     def update_label_options(self, movement_type):
         self.label_input.clear()
         if movement_type == "IN":
-            self.label_input.addItems(["Incoming", "Back"])
+            self.label_input.addItems(["Nouvel arrivage", "Retour"])
         elif movement_type == "OUT":
-            self.label_input.addItems(["Delivery", "Restocking"])
+            self.label_input.addItems(["Livraison", "Réassortiment"])
 
     def toggle_recipient_visibility(self, movement_type):
-        """ Toggle the recipient input visibility based on the movement type """
         if movement_type == "IN":
             self.recipient_input.setVisible(False)  # Hide recipient input for "IN"
         else:
             self.recipient_input.setVisible(True)  # Show recipient input for "OUT"
-            if self.recipient_input.currentText() == "Select Client":
+            if self.recipient_input.currentText() == "Sélectionner client":
                 self.recipient_input.setCurrentText("")
     def add_new_client(self, client_name):
         # Function to add a new client to the database
@@ -125,7 +124,7 @@ class AddMovementDialog(QDialog):
         if dialog.exec_():
             # After adding the client, refresh the client list
             self.recipient_input.clear()
-            self.recipient_input.addItem("Select Client")
+            self.recipient_input.addItem("Sélectionner client")
             self.clients = fetch_all_clients()
             for client in self.clients:
                 self.recipient_input.addItem(client[1], client[0])  # client name, client id

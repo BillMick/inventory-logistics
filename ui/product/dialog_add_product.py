@@ -9,7 +9,7 @@ from db.manager import insert_product, fetch_all_suppliers_id_name
 class AddProductDialog(QDialog):
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.setWindowTitle("Add New Product")
+        self.setWindowTitle("Ajouter nouveau produit")
         self.setMinimumWidth(400)
 
         layout = QVBoxLayout()
@@ -17,7 +17,7 @@ class AddProductDialog(QDialog):
         self.name_input = QLineEdit()
         self.category_input = QLineEdit()
         self.unit_input = QComboBox()
-        self.unit_input.addItems(["pcs", "kg", "liters", "box"])
+        self.unit_input.addItems(["pcs", "kg", "litre", "box"])
 
         self.price_input = QDoubleSpinBox()
         self.price_input.setMaximum(9999999999)
@@ -33,30 +33,30 @@ class AddProductDialog(QDialog):
         self.supplier_map = {}
         self.load_suppliers()
 
-        layout.addWidget(QLabel("Name"))
+        layout.addWidget(QLabel("Nom"))
         layout.addWidget(self.name_input)
 
-        layout.addWidget(QLabel("Category"))
+        layout.addWidget(QLabel("Catégorie"))
         layout.addWidget(self.category_input)
 
-        layout.addWidget(QLabel("Unit"))
+        layout.addWidget(QLabel("Unité"))
         layout.addWidget(self.unit_input)
 
-        layout.addWidget(QLabel("Price"))
+        layout.addWidget(QLabel("Prix"))
         layout.addWidget(self.price_input)
 
         layout.addWidget(QLabel("Description"))
         layout.addWidget(self.description_input)
 
-        layout.addWidget(QLabel("Low Stock Threshold"))
+        layout.addWidget(QLabel("Seuil d'alerte"))
         layout.addWidget(self.threshold_input)
         
-        layout.addWidget(QLabel("Supplier"))
+        layout.addWidget(QLabel("Fournisseur"))
         layout.addWidget(self.supplier_input)
 
         btn_layout = QHBoxLayout()
-        btn_add = QPushButton("Add")
-        btn_cancel = QPushButton("Cancel")
+        btn_add = QPushButton("Ajouter")
+        btn_cancel = QPushButton("Annuler")
 
         btn_add.clicked.connect(self.submit)
         btn_cancel.clicked.connect(self.reject)
@@ -85,11 +85,11 @@ class AddProductDialog(QDialog):
         supplier_id = self.supplier_input.currentData()
 
         if not name or not category:
-            QMessageBox.warning(self, "Missing Data", "Please fill in all required fields.")
+            QMessageBox.warning(self, "Données manquantes", "Remplissez tous les champs requis.")
             return
 
         success = insert_product(name, category, supplier_id, unit, price, description, threshold)
         if success:
             self.accept()
         else:
-            QMessageBox.critical(self, "Error", "Failed to add product.")
+            QMessageBox.critical(self, "Error", "Echec d'ajout du produit.")

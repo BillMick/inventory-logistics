@@ -11,8 +11,8 @@ from db.manager import *
 class StockMovementDashboard(QWidget):
     def __init__(self):
         super().__init__()
-        self.setWindowTitle("Stock Movement Dashboard")
-        self.showMaximized()  # ← This opens it maximized, not fullscreen
+        self.setWindowTitle("Dashboard Mouvements de stock")
+        self.showMaximized()
 
         layout = QVBoxLayout()
         layout.setSpacing(15)
@@ -20,23 +20,21 @@ class StockMovementDashboard(QWidget):
         # --- KPI Section ---
         self.stats_layout = QHBoxLayout()
         self.stats_layout.setSpacing(10)
-        self.total_label = self.create_stat_card("Total Movements", "0")
+        self.total_label = self.create_stat_card("Nombre de Mouvements", "0")
         self.in_label = self.create_stat_card("Total IN", "0", "#28a745")
         self.out_label = self.create_stat_card("Total OUT", "0", "#dc3545")
-        # self.avg_qty_label = self.create_stat_card("Avg Quantity", "0")
-        self.last_movement_label = self.create_stat_card("Last Movement", "-")
+        self.last_movement_label = self.create_stat_card("Récent Mouvement", "-")
         
         self.label_stats_layout = QHBoxLayout()
         self.label_stats_layout.setSpacing(10)
-        self.incoming_label = self.create_stat_card("Incoming", "0", "#6f42c1")
-        self.back_label = self.create_stat_card("Back", "0", "#20c997")
-        self.delivery_label = self.create_stat_card("Delivery", "0", "#fd7e14")
-        self.restocking_label = self.create_stat_card("Restocking", "0", "#ffc107")
+        self.incoming_label = self.create_stat_card("Nouvel arrivage", "0", "#6f42c1")
+        self.back_label = self.create_stat_card("Retour", "0", "#20c997")
+        self.delivery_label = self.create_stat_card("Livraison", "0", "#fd7e14")
+        self.restocking_label = self.create_stat_card("Réassortiment", "0", "#ffc107")
 
         self.stats_layout.addWidget(self.total_label)
         self.stats_layout.addWidget(self.in_label)
         self.stats_layout.addWidget(self.out_label)
-        # self.stats_layout.addWidget(self.avg_qty_label)
         self.stats_layout.addWidget(self.last_movement_label)
         self.label_stats_layout.addWidget(self.incoming_label)
         self.label_stats_layout.addWidget(self.back_label)
@@ -52,30 +50,30 @@ class StockMovementDashboard(QWidget):
         filter_layout = QHBoxLayout()
 
         self.base_filter = QLineEdit()
-        self.base_filter.setPlaceholderText("Filter by base name...")
+        self.base_filter.setPlaceholderText("Filtrer par nom...")
         self.base_filter.textChanged.connect(self.load_movements)
 
         self.type_filter = QComboBox()
-        self.type_filter.addItems(["All", "IN", "OUT"])
+        self.type_filter.addItems(["Tout", "IN", "OUT"])
         self.type_filter.currentIndexChanged.connect(self.load_movements)
         
-        btn_export = QPushButton("Export PDF")
+        btn_export = QPushButton("Exporter PDF")
         btn_export.clicked.connect(self.export_pdf_report)
         btn_export.setStyleSheet("background-color: #6c757d; color: white;")
 
-        btn_refresh = QPushButton("Refresh")
+        btn_refresh = QPushButton("Actualiser")
         btn_refresh.clicked.connect(self.load_movements)
         btn_refresh.setStyleSheet("background-color: #17a2b8; color: white;")
 
-        btn_add = QPushButton("Add Movement")
+        btn_add = QPushButton("Ajouter Mouvement")
         btn_add.clicked.connect(self.add_movement)
         btn_add.setStyleSheet("background-color: #007bff; color: white;")
         
-        btn_verify_inventory = QPushButton("Verify Inventory")
+        btn_verify_inventory = QPushButton("Contrôle Inventaire")
         btn_verify_inventory.clicked.connect(self.open_inventory_verification)
         btn_verify_inventory.setStyleSheet("background-color: #343a40; color: white;")
 
-        btn_quit = QPushButton("Quit")
+        btn_quit = QPushButton("Fermer")
         btn_quit.setStyleSheet("background-color: #dc3545; color: white;")
         btn_quit.clicked.connect(self.close)
 
@@ -96,7 +94,7 @@ class StockMovementDashboard(QWidget):
         self.table = QTableWidget()
         self.table.setColumnCount(8)
         self.table.setHorizontalHeaderLabels([
-            "ID", "Product", "Type", "Label", "Recipient", "Quantity", "Comment", "Timestamp"
+            "ID", "Produit", "Type", "Label", "Récepteur", "Quantité", "Commentaire", "Effectué le"
         ])
         self.table.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         self.table.setSortingEnabled(True)
@@ -157,7 +155,7 @@ class StockMovementDashboard(QWidget):
 
         for m in movements:
             base_name = m[1].lower()
-            if selected_type != "All" and m[2] != selected_type:
+            if selected_type != "Tout" and m[2] != selected_type:
                 continue
             if base_filter_text and base_filter_text not in base_name:
                 continue
@@ -169,13 +167,13 @@ class StockMovementDashboard(QWidget):
             total_qty += m[5]
             last_movement = m[7]
             label = m[3]
-            if label == "Incoming":
+            if label == "Nouvel arrivage":
                 incoming_count += 1
-            elif label == "Back":
+            elif label == "Retour":
                 back_count += 1
-            elif label == "Delivery":
+            elif label == "Livraison":
                 delivery_count += 1
-            elif label == "Restocking":
+            elif label == "Réassortiment":
                 restocking_count += 1
 
 
@@ -210,7 +208,7 @@ class StockMovementDashboard(QWidget):
         from reportlab.platypus import Table, TableStyle
         from datetime import datetime
 
-        filepath, _ = QFileDialog.getSaveFileName(self, "Save File", "", "PDF Files (*.pdf)")
+        filepath, _ = QFileDialog.getSaveFileName(self, "Enregistrer Fichier", "", "PDF Files (*.pdf)")
         if filepath:
             if not filepath.endswith(".pdf"):
                 filepath += ".pdf"
@@ -218,10 +216,10 @@ class StockMovementDashboard(QWidget):
         width, height = A4
 
         c.setFont("Helvetica-Bold", 16)
-        c.drawCentredString(width / 2, height - 50, "Stock Movement Report")
+        c.drawCentredString(width / 2, height - 50, "Rapport de mouvements de stock")
 
         c.setFont("Helvetica", 10)
-        c.drawString(50, height - 70, f"Generated on: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+        c.drawString(50, height - 70, f"Généré le: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
 
         y_pos = height - 100
 
@@ -277,8 +275,7 @@ class StockMovementDashboard(QWidget):
             c.showPage()
 
         c.save()
-        print(f"Stock movement report saved as {filepath}")
-        QMessageBox.information(self, "Export Successful", f"PDF report saved to:\n{filepath}")
+        QMessageBox.information(self, "Exportation réussie", f"{filepath} enregistré.")
         
     def open_inventory_verification(self):
         from ui.stock_movement.dialog_inventory_verification import InventoryVerificationDialog

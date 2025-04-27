@@ -7,7 +7,7 @@ from db.manager import insert_supplier
 class AddSupplierDialog(QDialog):
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.setWindowTitle("Add New Supplier")
+        self.setWindowTitle("Ajouter Fournisseur")
         self.setMinimumWidth(350)
 
         layout = QVBoxLayout()
@@ -18,20 +18,20 @@ class AddSupplierDialog(QDialog):
         self.email_input = QLineEdit()
         self.address_input = QLineEdit()
 
-        layout.addWidget(QLabel("Name:"))
+        layout.addWidget(QLabel("Nom:"))
         layout.addWidget(self.name_input)
-        layout.addWidget(QLabel("Fiscal ID:"))
+        layout.addWidget(QLabel("ID Fiscal:"))
         layout.addWidget(self.fiscal_id_input)
         layout.addWidget(QLabel("Contact:"))
         layout.addWidget(self.contact_input)
         layout.addWidget(QLabel("Email:"))
         layout.addWidget(self.email_input)
-        layout.addWidget(QLabel("Address:"))
+        layout.addWidget(QLabel("Adresse:"))
         layout.addWidget(self.address_input)
 
         button_layout = QHBoxLayout()
-        btn_add = QPushButton("Add")
-        btn_cancel = QPushButton("Cancel")
+        btn_add = QPushButton("Ajouter")
+        btn_cancel = QPushButton("Annuler")
         btn_add.clicked.connect(self.add_supplier)
         btn_cancel.clicked.connect(self.reject)
         button_layout.addWidget(btn_add)
@@ -48,12 +48,12 @@ class AddSupplierDialog(QDialog):
         address = self.address_input.text().strip()
 
         if not name or not fiscal_id:
-            QMessageBox.warning(self, "Validation Error", "Name and Fiscal ID are required.")
+            QMessageBox.warning(self, "Validation Error", "Nom et ID Fiscal requis.")
             return
 
         try:
             insert_supplier(name, fiscal_id, contact, email, address)
-            QMessageBox.information(self, "Success", f"Supplier '{name}' added successfully.")
+            QMessageBox.information(self, "Succès", f"Fournisseur '{name}' ajouté.")
             self.accept()
         except Exception as e:
-            QMessageBox.critical(self, "Error", f"Failed to add supplier:\n{str(e)}")
+            QMessageBox.critical(self, "Erreur", f"Echec d'ajout:\n{str(e)}")

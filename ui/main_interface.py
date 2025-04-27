@@ -62,13 +62,13 @@ class MainDashboard(QWidget):
     def __init__(self, user):
         super().__init__()
         self.user = user  # Save the user info
-        self.setWindowTitle(f"Main Inventory Dashboard - Logged in as {self.user['username']}")
+        self.setWindowTitle(f"Inventaire et Logistique")
         self.showMaximized()
 
         main_layout = QVBoxLayout()
         main_layout.setSpacing(15)
         
-        user_label = QLabel(f"Logged in as: {self.user['username']}")
+        user_label = QLabel(f"Utilisateur connecté: {self.user['username']}")
         user_label.setAlignment(Qt.AlignRight)
         user_label.setStyleSheet("color: #6c757d; font-style: italic;")
         main_layout.addWidget(user_label)
@@ -76,16 +76,16 @@ class MainDashboard(QWidget):
         # --- Menu Bar ---
         icons = {
             "Dashboard": self.style().standardIcon(QStyle.SP_ComputerIcon),
-            "Movements": self.style().standardIcon(QStyle.SP_FileDialogContentsView),
-            "Products": self.style().standardIcon(QStyle.SP_DirIcon),
-            "Suppliers": self.style().standardIcon(QStyle.SP_DriveNetIcon),
+            "Mouvements": self.style().standardIcon(QStyle.SP_FileDialogContentsView),
+            "Produits": self.style().standardIcon(QStyle.SP_DirIcon),
+            "Fournisseurs": self.style().standardIcon(QStyle.SP_DriveNetIcon),
             "Clients": self.style().standardIcon(QStyle.SP_DirHomeIcon),
-            "Users": self.style().standardIcon(QStyle.SP_FileDialogDetailedView),
+            "Utilisateurs": self.style().standardIcon(QStyle.SP_FileDialogDetailedView),
         }
 
         menu_layout = QHBoxLayout()
-        for i, name in enumerate(["Dashboard", "Movements", "Products", "Suppliers", "Clients", "Users"]):
-            if name == "Users" and not self.user.get("is_admin"):
+        for i, name in enumerate(["Dashboard", "Mouvements", "Produits", "Fournisseurs", "Clients", "Utilisateurs"]):
+            if name == "Utilisateurs" and not self.user.get("is_admin"):
                 continue
             btn = QPushButton(icons[name], name)
             btn.setStyleSheet("""
@@ -104,13 +104,13 @@ class MainDashboard(QWidget):
             """)
             if name == "Dashboard":
                 btn.clicked.connect(lambda _, idx=0: self.stack.fadeToIndex(idx))
-            elif name == "Movements":
+            elif name == "Mouvements":
                 btn.clicked.connect(lambda _, idx=1: self.stack.fadeToIndex(idx))
-            elif name == "Products":
+            elif name == "Produits":
                 btn.clicked.connect(lambda _, idx=2: self.stack.fadeToIndex(idx))
-            elif name == "Users":
+            elif name == "Utilisateurs":
                 btn.clicked.connect(lambda _, idx=3: self.stack.fadeToIndex(idx))
-            elif name == "Suppliers":
+            elif name == "Fournisseurs":
                 btn.clicked.connect(lambda _, idx=4: self.stack.fadeToIndex(idx))
             elif name == "Clients":
                 btn.clicked.connect(lambda _, idx=5: self.stack.fadeToIndex(idx))
@@ -118,15 +118,15 @@ class MainDashboard(QWidget):
             menu_layout.addWidget(btn)
 
         menu_layout.addStretch()
-        btn_refresh = QPushButton("Main interface Refresh")
+        btn_refresh = QPushButton("Actualiser")
         btn_refresh.clicked.connect(self.update_dashboard)
         btn_refresh.setStyleSheet("background-color: #17a2b8; color: white; padding: 8px 16px; border-radius: 6px;")
         
-        quit_btn = QPushButton("Quit")
+        quit_btn = QPushButton("Quitter")
         quit_btn.setStyleSheet("background-color: #e74c3c; color: white; padding: 8px 16px; border-radius: 6px;")
         quit_btn.clicked.connect(self.close)
         
-        btn_export_pdf = QPushButton("Export Report as PDF")
+        btn_export_pdf = QPushButton("Exporter Rapport en PDF")
         btn_export_pdf.setStyleSheet("background-color: #28a745; color: white; padding: 8px 16px; border-radius: 6px;")
         btn_export_pdf.clicked.connect(self.export_pdf_report)
         
@@ -145,20 +145,20 @@ class MainDashboard(QWidget):
         dashboard_layout = QVBoxLayout()
         dashboard_layout.setSpacing(15)
 
-        # --- KPI Section (Now includes Product KPIs too) ---
+        # --- KPI Section (Now includes Product KPIs) ---
         self.kpi_layout = QGridLayout()
         self.kpi_layout.setSpacing(10)
 
-        self.total_movements_card = self.create_stat_card("Total Movements", "0", "#007bff")
+        self.total_movements_card = self.create_stat_card("Mouvements Total", "0", "#007bff")
         self.in_card = self.create_stat_card("IN", "0", "#28a745")
         self.out_card = self.create_stat_card("OUT", "0", "#dc3545")
-        self.total_products_card = self.create_stat_card("Total Products", "0", "#17a2b8")
+        self.total_products_card = self.create_stat_card("Produits Total", "0", "#17a2b8")
 
         self.total_stock_card = self.create_stat_card("Total Stock", "0", "#20c997")
-        self.below_threshold_card = self.create_stat_card("Below Threshold", "0", "#ffc107")
-        self.out_of_stock_card = self.create_stat_card("Out of Stock", "0", "#e74c3c")
-        self.value_label_card = self.create_stat_card("Stock Value", "$0.00", "#6f42c1")
-        self.total_suppliers_card = self.create_stat_card("Total Suppliers", "0", "#17a2b8")
+        self.below_threshold_card = self.create_stat_card("Inférieur au Seuil", "0", "#ffc107")
+        self.out_of_stock_card = self.create_stat_card("En rupture", "0", "#e74c3c")
+        self.value_label_card = self.create_stat_card("Valeur Stock", "0.00 MAD", "#6f42c1")
+        self.total_suppliers_card = self.create_stat_card("Fournisseurs Total", "0", "#17a2b8")
         self.total_clients_card = self.create_stat_card("Total Clients", "0", "#17a2b8")
 
         # Add all KPI cards to layout
@@ -179,9 +179,9 @@ class MainDashboard(QWidget):
 
         # --- Charts Section ---
         charts_layout = QHBoxLayout()
-        self.movement_chart = PieChartWidget({}, "Stock Movement Distribution")
-        self.evolution_chart = PieChartWidget({}, "Movement Category Distribution")
-        self.top_products_chart = BarChartWidget({}, "Top Products")
+        self.movement_chart = PieChartWidget({}, "Représentation des mouvements de stock")
+        self.evolution_chart = PieChartWidget({}, "Représentation des catégories de mouvements")
+        self.top_products_chart = BarChartWidget({}, "Top Produits")
 
         charts_layout.addWidget(self.movement_chart)
         charts_layout.addWidget(self.evolution_chart)
@@ -259,10 +259,10 @@ class MainDashboard(QWidget):
         out_of_stock = stats.get("out_of_stock", 0)
         top_products = stats.get("top_products", {})
         
-        incoming_count = sum(1 for m in movements if m[3] == "Incoming")
-        back_count = sum(1 for m in movements if m[3] == "Back")
-        delivery_count = sum(1 for m in movements if m[3] == "Delivery")
-        restocking_count = sum(1 for m in movements if m[3] == "Restocking")
+        incoming_count = sum(1 for m in movements if m[3] == "Nouvel arrivage")
+        back_count = sum(1 for m in movements if m[3] == "Retour")
+        delivery_count = sum(1 for m in movements if m[3] == "Livraison")
+        restocking_count = sum(1 for m in movements if m[3] == "Réassortiment")
         
         for row_idx, product in enumerate(products):
             stock = product[8]
@@ -278,7 +278,7 @@ class MainDashboard(QWidget):
         self.total_stock_card.value_label.setText(str(total_stock))
         self.below_threshold_card.value_label.setText(str(below_threshold))
         self.out_of_stock_card.value_label.setText(str(out_of_stock))
-        self.value_label_card.value_label.setText(f"${inventory_value:,.2f}")
+        self.value_label_card.value_label.setText(f"{inventory_value:,.2f} MAD")
         self.total_suppliers_card.value_label.setText(str(len(suppliers)))
         self.total_clients_card.value_label.setText(str(len(clients)))
         
@@ -286,23 +286,23 @@ class MainDashboard(QWidget):
         # --- Update charts ---
         self.movement_chart.plot(
             {"IN": in_count, "OUT": out_count},
-            "Stock Movement Distribution"
+            "Représentation des mouvements de stock"
         )
         self.top_products_chart.plot(
             top_products,
-            "Top Products"
+            "Top Produits"
         )
         # --- Update Evolution Chart ---
         evolution_data = {
-            "Incoming": incoming_count,
-            "Back": back_count,
-            "Delivery": delivery_count,
-            "Restocking": restocking_count
+            "Nouvel arrivage": incoming_count,
+            "Retour": back_count,
+            "Livraison": delivery_count,
+            "Réassortiment": restocking_count
         }
 
         self.evolution_chart.plot(
             evolution_data,
-            "Label Evolution"
+            "Représentation des labels de mouvements de stock"
         )
 
     def export_pdf_report(self):
@@ -312,7 +312,7 @@ class MainDashboard(QWidget):
         from datetime import datetime
         import os
 
-        filepath, _ = QFileDialog.getSaveFileName(self, "Save File", "", "PDF Files (*.pdf)")
+        filepath, _ = QFileDialog.getSaveFileName(self, "Enregistrer fichier", "", "PDF Files (*.pdf)")
         if filepath:
             if not filepath.endswith(".pdf"):
                 filepath += ".pdf"
@@ -321,9 +321,9 @@ class MainDashboard(QWidget):
         width, height = A4
 
         c.setFont("Helvetica-Bold", 20)
-        c.drawCentredString(width / 2, height - 50, "Inventory Dashboard Report")
+        c.drawCentredString(width / 2, height - 50, "Rapport global")
         c.setFont("Helvetica", 12)
-        c.drawString(50, height - 80, f"Generated on: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+        c.drawString(50, height - 80, f"Généré le: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
 
         y_pos = height - 120
 
@@ -354,16 +354,16 @@ class MainDashboard(QWidget):
 
         # --- Save Matplotlib Figures directly ---
         charts = [
-            (self.movement_chart.figure, "Stock Movement Distribution"),
-            (self.evolution_chart.figure, "Movement Category Distribution"),
-            (self.top_products_chart.figure, "Top Products")
+            (self.movement_chart.figure, "Représentation des mouvements de stock"),
+            (self.evolution_chart.figure, "Représentation des catégories de mouvements de stock"),
+            (self.top_products_chart.figure, "Top Produits")
         ]
 
         for fig, title in charts:
             with tempfile.NamedTemporaryFile(suffix=".png", delete=False) as tmp_file:
                 fig.savefig(tmp_file.name, bbox_inches='tight')
                 c.drawString(50, height - 80, title)
-                c.drawImage(tmp_file.name, 50, height / 2 - 100, width=500, height=250)
+                c.drawImage(tmp_file.name, 50, height / 2 - 100, width=500, height=300)
                 c.showPage()
                 os.unlink(tmp_file.name)
         c.save()

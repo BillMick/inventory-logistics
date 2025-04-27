@@ -12,7 +12,7 @@ import pandas as pd
 class ClientDashboard(QWidget):
     def __init__(self):
         super().__init__()
-        self.setWindowTitle("Client Management Dashboard")
+        self.setWindowTitle("Gestion des Clients")
         self.showMaximized()
 
         layout = QVBoxLayout()
@@ -21,7 +21,7 @@ class ClientDashboard(QWidget):
         # --- Stats Section ---
         stats_layout = QHBoxLayout()
         self.total_clients = self.create_stat_card("Total Clients", "0")
-        self.latest_client = self.create_stat_card("Last Client", "-")
+        self.latest_client = self.create_stat_card("Plus récent Client", "-")
 
         stats_layout.addWidget(self.total_clients)
         stats_layout.addWidget(self.latest_client)
@@ -32,30 +32,30 @@ class ClientDashboard(QWidget):
         filter_layout = QHBoxLayout()
 
         self.name_filter = QLineEdit()
-        self.name_filter.setPlaceholderText("Filter by name...")
+        self.name_filter.setPlaceholderText("Trier par nom...")
         self.name_filter.textChanged.connect(self.load_clients)
 
-        btn_add = QPushButton("Add Client")
+        btn_add = QPushButton("Ajouter Client")
         btn_add.clicked.connect(self.add_client)
         btn_add.setStyleSheet("background-color: #007bff; color: white")
 
-        btn_import_excel = QPushButton("Import from Excel")
+        btn_import_excel = QPushButton("Importer Excel")
         btn_import_excel.setStyleSheet("background-color: #20c997; color: white")
         btn_import_excel.clicked.connect(self.import_from_excel)
         
-        btn_export_excel = QPushButton("Export to Excel")
+        btn_export_excel = QPushButton("Exporter Excel")
         btn_export_excel.setStyleSheet("background-color: #28a745; color: white")
         btn_export_excel.clicked.connect(self.export_to_excel)
         
-        btn_export_pdf = QPushButton("Export to PDF")
+        btn_export_pdf = QPushButton("Exporter PDF")
         btn_export_pdf.setStyleSheet("background-color: #6c757d; color: white")
         btn_export_pdf.clicked.connect(self.export_pdf_report)
 
-        btn_refresh = QPushButton("Refresh")
+        btn_refresh = QPushButton("Actualiser")
         btn_refresh.clicked.connect(self.load_clients)
         btn_refresh.setStyleSheet("background-color: #17a2b8; color: white")
 
-        btn_quit = QPushButton("Quit")
+        btn_quit = QPushButton("Fermer")
         btn_quit.clicked.connect(self.close)
         btn_quit.setStyleSheet("background-color: #dc3545; color: white")
 
@@ -73,7 +73,7 @@ class ClientDashboard(QWidget):
         # --- Table ---
         self.table = QTableWidget()
         self.table.setColumnCount(8)
-        self.table.setHorizontalHeaderLabels(["ID", "Name", "Fiscal ID", "Contact", "Email", "Address", "Created At", "Action"])
+        self.table.setHorizontalHeaderLabels(["ID", "Nom", "ID Fiscal", "Contact", "Email", "Adresse", "Ajouté le", "Action"])
         self.table.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         self.table.setSortingEnabled(True)
         self.table.cellDoubleClicked.connect(self.edit_client)
@@ -143,7 +143,7 @@ class ClientDashboard(QWidget):
             total += 1
             last_name = name
             # Add Delete button in Action column
-            btn_delete = QPushButton("Delete")
+            btn_delete = QPushButton("Supprimer")
             btn_delete.setStyleSheet("background-color: #dc3545; color: white")
             btn_delete.clicked.connect(partial(self.delete_client, client_id=client_id))
             self.table.setCellWidget(row, 7, btn_delete)
@@ -160,17 +160,17 @@ class ClientDashboard(QWidget):
     def delete_client(self, client_id):
         confirm = QMessageBox.question(
             self,
-            "Confirm Delete",
-            "Are you sure you want to delete this client?",
+            "Confirmation de la suppression",
+            "Êtes-vous sûr de vouloir supprimer ce client?",
             QMessageBox.Yes | QMessageBox.No
         )
         if confirm == QMessageBox.Yes:
             try:
                 delete_client_by_id(client_id)
-                QMessageBox.information(self, "Deleted", "Client deleted successfully.")
+                QMessageBox.information(self, "Suppression", "Client supprimé.")
                 self.load_clients()
             except Exception as e:
-                QMessageBox.critical(self, "Error", f"Failed to delete client:\n{str(e)}")
+                QMessageBox.critical(self, "Error", f"Echec de suppression de ce client:\n{str(e)}")
 
     def edit_client(self, row, column):
         client_data = {
@@ -195,10 +195,10 @@ class ClientDashboard(QWidget):
         from datetime import datetime
 
         if self.table.rowCount() == 0:
-            QMessageBox.warning(self, "Export Failed", "No client data to export.")
+            QMessageBox.warning(self, "Echec de l'exportation", "Pas de données client à exporter.")
             return
 
-        filepath, _ = QFileDialog.getSaveFileName(self, "Save PDF", "", "PDF Files (*.pdf)")
+        filepath, _ = QFileDialog.getSaveFileName(self, "Enregistrer PDF", "", "PDF Files (*.pdf)")
         if not filepath:
             return
         if not filepath.endswith(".pdf"):
@@ -212,7 +212,7 @@ class ClientDashboard(QWidget):
         c.drawCentredString(width / 2, height - 50, "Client Report")
 
         c.setFont("Helvetica", 10)
-        c.drawString(50, height - 70, f"Generated on: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+        c.drawString(50, height - 70, f"Généré le: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
 
 
         y = height - 100
@@ -234,7 +234,7 @@ class ClientDashboard(QWidget):
         c.showPage()
 
         # --- Table Data ---
-        headers = ["ID", "Name", "Fiscal ID", "Contact", "Email", "Created At"]
+        headers = ["ID", "Nom", "ID Fiscal", "Contact", "Email", "Ajouté le"]
         data = [headers]
 
         for row in range(self.table.rowCount()):
@@ -267,7 +267,7 @@ class ClientDashboard(QWidget):
     def export_to_excel(self):
         """Export clients data to an Excel file."""
         if self.table.rowCount() == 0:
-            QMessageBox.warning(self, "Export Failed", "No client data to export.")
+            QMessageBox.warning(self, "Echec de l'exportation", "Pas de données client à exporter.")
             return
 
         # Create a list of dictionaries for each row
@@ -275,19 +275,19 @@ class ClientDashboard(QWidget):
         for row in range(self.table.rowCount()):
             row_data = {}
             row_data["ID"] = self.table.item(row, 0).text()
-            row_data["Name"] = self.table.item(row, 1).text()
-            row_data["Fiscal ID"] = self.table.item(row, 2).text()
+            row_data["Nom"] = self.table.item(row, 1).text()
+            row_data["ID Fiscal"] = self.table.item(row, 2).text()
             row_data["Contact"] = self.table.item(row, 3).text()
             row_data["Email"] = self.table.item(row, 4).text()
-            row_data["Address"] = self.table.item(row, 5).text()
-            row_data["Created At"] = self.table.item(row, 6).text()
+            row_data["Adresse"] = self.table.item(row, 5).text()
+            row_data["Ajouté le"] = self.table.item(row, 6).text()
             data.append(row_data)
 
         # Convert the data to a pandas DataFrame
         df = pd.DataFrame(data)
 
         # Open file dialog to save the Excel file
-        filepath, _ = QFileDialog.getSaveFileName(self, "Save Excel", "", "Excel Files (*.xlsx)")
+        filepath, _ = QFileDialog.getSaveFileName(self, "Sauvegarder Excel", "", "Excel Files (*.xlsx)")
         if not filepath:
             return
         if not filepath.endswith(".xlsx"):
@@ -295,9 +295,9 @@ class ClientDashboard(QWidget):
 
         try:
             df.to_excel(filepath, index=False)
-            QMessageBox.information(self, "Export Successful", f"Excel report saved to:\n{filepath}")
+            QMessageBox.information(self, "Exportation réussie", f"{filepath} enregistré.")
         except Exception as e:
-            QMessageBox.critical(self, "Export Failed", f"An error occurred while exporting: {e}")
+            QMessageBox.critical(self, "Echec de l'exportation", f"Erreur: {e}")
 
     def import_from_excel(self):
         """Import clients data from an Excel file."""
@@ -310,23 +310,23 @@ class ClientDashboard(QWidget):
             df = pd.read_excel(filepath)
 
             # Ensure the required columns are in the file
-            required_columns = ["Name", "Fiscal ID", "Contact", "Email", "Address"]
+            required_columns = ["Nom", "ID Fiscal", "Contact", "Email", "Adresse"]
             if not all(col in df.columns for col in required_columns):
-                QMessageBox.warning(self, "Import Failed", "The Excel file must contain all the required columns.")
+                QMessageBox.warning(self, "Importation échouée", "Tous les champs sont requis.")
                 return
 
             # Insert each client into the database
             for _, row in df.iterrows():
-                name = row["Name"]
-                fiscal_id = row["Fiscal ID"]
+                name = row["Nom"]
+                fiscal_id = row["ID Fiscal"]
                 contact = row["Contact"]
                 email = row["Email"]
-                address = row["Address"]
+                address = row["Adresse"]
                 
                 insert_client(name, fiscal_id, contact, email, address)
             
             # Reload the clients list after import
             self.load_clients()
-            QMessageBox.information(self, "Import Successful", f"Data imported successfully from:\n{filepath}")
+            QMessageBox.information(self, "Importation réussie", f"Données importées de:\n{filepath}")
         except Exception as e:
-            QMessageBox.critical(self, "Import Failed", f"An error occurred while importing: {e}")
+            QMessageBox.critical(self, "Importation échouée", f"error: {e}")
