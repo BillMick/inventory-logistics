@@ -125,7 +125,8 @@ def fetch_all_products_with_stock():
                     COALESCE(SUM(CASE WHEN sm.type = 'IN' THEN sm.quantity ELSE 0 END), 0) -
                     COALESCE(SUM(CASE WHEN sm.type = 'OUT' THEN sm.quantity ELSE 0 END), 0) AS stock,
                     p.created_at,
-                    p.description
+                    p.description,
+                    p.is_archived
                 FROM product p
                 LEFT JOIN supplier s ON p.supplier_id = s.id
                 LEFT JOIN stock_movement sm ON p.id = sm.product_id
@@ -409,3 +410,11 @@ def delete_user_by_id(user_id):
     with conn.cursor() as cur:
         cur.execute("DELETE FROM users WHERE id = %s", (user_id,))
         conn.commit()
+
+def update_product_archived_status(product_id, archived):
+    conn = connection()
+    cursor = conn.cursor()
+    cursor.execute("UPDATE product SET is_archived = %s WHERE id = %s", (archived, product_id))
+    conn.commit()
+    cursor.close()
+    conn.close()

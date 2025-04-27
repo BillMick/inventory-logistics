@@ -5,7 +5,7 @@ from PyQt5.QtWidgets import (
 )
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QColor, QFont
-from db.manager import fetch_all_products_with_stock
+from db.manager import fetch_all_products_with_stock, update_product_archived_status
 from utils.excel_importer import import_products_from_excel
 from ui.product.dialog_add_product import AddProductDialog
 import pandas as pd
@@ -42,9 +42,13 @@ class ProductDashboard(QWidget):
         filter_layout = QHBoxLayout()
 
         self.name_filter = QLineEdit()
+        self.is_archived_filter = QComboBox()
+        self.is_archived_filter.addItems(["Not Archived", "Archived", "All"])
+        self.is_archived_filter.currentIndexChanged.connect(self.load_products)
+
         self.name_filter.setPlaceholderText("Filter by product name...")
         self.name_filter.textChanged.connect(self.load_products)
-
+        
         btn_add = QPushButton("Add Product")
         btn_add.clicked.connect(self.add_product)
         btn_add.setStyleSheet("background-color: #007bff; color: white; font-weight: bold;")
@@ -63,6 +67,7 @@ class ProductDashboard(QWidget):
 
         filter_layout.addStretch()
         filter_layout.addWidget(self.name_filter)
+        filter_layout.addWidget(self.is_archived_filter)
         filter_layout.addWidget(btn_add)
         filter_layout.addWidget(btn_import)
         filter_layout.addWidget(btn_export)
@@ -73,10 +78,11 @@ class ProductDashboard(QWidget):
 
         # --- Table Section ---
         self.table = QTableWidget()
-        self.table.setColumnCount(11)
-        self.table.setColumnCount(12)  # was 11
+        self.table.setColumnCount(13)
         self.table.setHorizontalHeaderLabels([
-            "ID", "Name", "Code", "Category", "Unit", "Price", "Supplier", "Threshold", "Stock", "Total Value", "Added at", "Description"
+            "ID", "Name", "Code", "Category", "Unit", "Price", 
+            "Supplier", "Threshold", "Stock", "Total Value", "Added at", 
+            "Description", "Action"
         ])
         self.table.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         self.table.setSortingEnabled(True)
@@ -132,11 +138,20 @@ class ProductDashboard(QWidget):
         out_of_stock = 0
 
         name_filter_text = self.name_filter.text().lower()
+        archived_filter = self.is_archived_filter.currentText()
         filtered_products = []
 
         for product in products:
             if name_filter_text and name_filter_text not in product[1].lower():
                 continue
+
+            is_archived = product[11]  # Assuming index 11 is is_archived, update if needed
+
+            if archived_filter == "Not Archived" and is_archived:
+                continue
+            elif archived_filter == "Archived" and not is_archived:
+                continue
+
             filtered_products.append(product)
 
         for row_idx, product in enumerate(filtered_products):
@@ -178,6 +193,12 @@ class ProductDashboard(QWidget):
             self.table.item(row_idx, 8).setBackground(color)
             
             inventory_value += stock * price
+            
+            # Add Archive/Unarchive button
+            action_btn = QPushButton("Unarchive" if product[11] else "Archive")  # Assuming is_archived is at index 11
+            action_btn.setStyleSheet("background-color: #6c757d; color: white;")
+            action_btn.clicked.connect(lambda checked, pid=product[0], archived=product[11]: self.toggle_archive(pid, archived))
+            self.table.setCellWidget(row_idx, 12, action_btn)
 
         # --- Update KPI cards ---
         self.total_label.value_label.setText(str(len(filtered_products)))
@@ -211,8 +232,8 @@ class ProductDashboard(QWidget):
             "category": self.table.item(row, 3).text(),
             "unit": self.table.item(row, 4).text(),
             "price": float(self.table.item(row, 5).text()),
-            "threshold": int(self.table.item(row, 6).text()),
-            "description": self.table.item(row, 9).text(),
+            "threshold": int(self.table.item(row, 7).text()),
+            "description": self.table.item(row, 11).text(),
         }
 
         from ui.product.dialog_update_product import UpdateProductDialog
@@ -254,3 +275,9 @@ class ProductDashboard(QWidget):
                 QMessageBox.critical(self, "Export Error", f"An error occurred:\n{str(e)}")
         self.load_products()
 
+    def toggle_archive(self, product_id, currently_archived):
+        try:
+            update_product_archived_status(product_id, not currently_archived)
+            self.load_products()
+        except Exception as e:
+            QMessageBox.critical(self, "Error", f"Failed to update archive status:\n{str(e)}")

@@ -49,14 +49,15 @@ def create_tables():
             price NUMERIC(10, 2) NOT NULL DEFAULT 0.0,
             description TEXT,
             threshold INTEGER DEFAULT 3,
-            supplier_id INTEGER REFERENCES supplier(id),
+            supplier_id INTEGER NULL REFERENCES supplier(id) ON DELETE SET NULL,
+            is_archived BOOLEAN DEFAULT FALSE,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         );
         """,
         """
         CREATE TABLE IF NOT EXISTS stock_movement (
             id SERIAL PRIMARY KEY,
-            product_id INTEGER REFERENCES product(id) ON DELETE CASCADE,
+            product_id INTEGER REFERENCES product(id),
             type VARCHAR(10) CHECK (type IN ('IN', 'OUT')) NOT NULL,
             label TEXT NOT NULL,
             reason TEXT,

@@ -24,6 +24,8 @@ class AddProductDialog(QDialog):
         self.price_input.setDecimals(2)
 
         self.description_input = QTextEdit()
+        self.description_input.setFixedHeight(60)
+        
         self.threshold_input = QSpinBox()
         self.threshold_input.setMaximum(100000)
         
@@ -66,6 +68,7 @@ class AddProductDialog(QDialog):
         self.setLayout(layout)
 
     def load_suppliers(self):
+        self.supplier_input.addItem("— None —", None)
         suppliers = fetch_all_suppliers_id_name()  # Should return list of (id, name)
         if suppliers:
             for sid, name in suppliers:
