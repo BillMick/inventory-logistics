@@ -154,6 +154,19 @@ def update_product_by_id(product_id, name, code, category, unit, price, descript
                     threshold = %s
                 WHERE id = %s
             """, (name, code, category, unit, price, description, threshold, product_id))
+            
+def update_supplier_by_id(supplier_id, name, fiscal_id, contact, email):
+    conn = connection()
+    with conn:
+        with conn.cursor() as cur:
+            cur.execute("""
+                UPDATE supplier
+                SET name = %s,
+                    fiscal_id = %s,
+                    contact = %s,
+                    email = %s
+                WHERE id = %s
+            """, (name, fiscal_id, contact, email, supplier_id))
 
 def fetch_all_stock_movements():
     conn = connection()
@@ -409,6 +422,12 @@ def delete_user_by_id(user_id):
     conn = connection()
     with conn.cursor() as cur:
         cur.execute("DELETE FROM users WHERE id = %s", (user_id,))
+        conn.commit()
+        
+def delete_supplier_by_id(supplier_id):
+    conn = connection()
+    with conn.cursor() as cur:
+        cur.execute("DELETE FROM supplier WHERE id = %s", (supplier_id,))
         conn.commit()
 
 def update_product_archived_status(product_id, archived):

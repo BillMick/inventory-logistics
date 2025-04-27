@@ -5,9 +5,8 @@ from PyQt5.QtWidgets import (
 )
 from PyQt5.QtGui import QFont
 from PyQt5.QtCore import Qt
-from db.manager import fetch_all_users
+from db.manager import fetch_all_users, delete_user_by_id
 from functools import partial
-from db.manager import delete_user_by_id
 
 
 class UserDashboard(QWidget):
@@ -163,7 +162,6 @@ class UserDashboard(QWidget):
         )
         if confirm == QMessageBox.Yes:
             try:
-                from db.manager import delete_user_by_id
                 delete_user_by_id(user_id)
                 QMessageBox.information(self, "Deleted", "User deleted successfully.")
                 self.load_users()

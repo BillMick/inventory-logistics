@@ -1,10 +1,11 @@
 from PyQt5.QtWidgets import (
-    QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QTableWidget,
+    QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QTableWidget, QMessageBox,
     QTableWidgetItem, QLabel, QLineEdit, QFrame, QSizePolicy, QHeaderView
 )
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QFont
-from db.manager import fetch_all_suppliers
+from db.manager import fetch_all_suppliers, delete_supplier_by_id
+from functools import partial
 
 
 class SupplierDashboard(QWidget):
@@ -55,10 +56,11 @@ class SupplierDashboard(QWidget):
 
         # --- Table ---
         self.table = QTableWidget()
-        self.table.setColumnCount(6)
-        self.table.setHorizontalHeaderLabels(["ID", "Name", "Fiscal ID", "Contact", "Email", "Created At"])
+        self.table.setColumnCount(7)
+        self.table.setHorizontalHeaderLabels(["ID", "Name", "Fiscal ID", "Contact", "Email", "Created At", "Action"])
         self.table.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         self.table.setSortingEnabled(True)
+        self.table.cellDoubleClicked.connect(self.edit_supplier)
         self.table.horizontalHeader().setStretchLastSection(True)
         self.table.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
 
@@ -123,6 +125,11 @@ class SupplierDashboard(QWidget):
 
             total += 1
             last_name = name
+            # Add Delete button in Action column
+            btn_delete = QPushButton("Delete")
+            btn_delete.setStyleSheet("background-color: #dc3545; color: white; font-weight: bold;")
+            btn_delete.clicked.connect(partial(self.delete_supplier, supplier_id=supplier_id))
+            self.table.setCellWidget(row, 6, btn_delete)
 
         self.total_suppliers.value_label.setText(str(total))
         self.latest_supplier.value_label.setText(last_name)
@@ -130,5 +137,34 @@ class SupplierDashboard(QWidget):
     def add_supplier(self):
         from ui.supplier.dialog_add_supplier import AddSupplierDialog
         dialog = AddSupplierDialog(self)
+        if dialog.exec_():
+            self.load_suppliers()
+            
+    def delete_supplier(self, supplier_id):
+        confirm = QMessageBox.question(
+            self,
+            "Confirm Delete",
+            "Are you sure you want to delete this supplier?",
+            QMessageBox.Yes | QMessageBox.No
+        )
+        if confirm == QMessageBox.Yes:
+            try:
+                delete_supplier_by_id(supplier_id)
+                QMessageBox.information(self, "Deleted", "Supplier deleted successfully.")
+                self.load_suppliers()
+            except Exception as e:
+                QMessageBox.critical(self, "Error", f"Failed to delete supplier:\n{str(e)}")
+
+    def edit_supplier(self, row, column):
+        supplier_data = {
+            "id": int(self.table.item(row, 0).text()),
+            "name": self.table.item(row, 1).text(),
+            "fiscal_id": self.table.item(row, 2).text(),
+            "contact": self.table.item(row, 3).text(),
+            "email": self.table.item(row, 4).text(),
+        }
+
+        from ui.supplier.dialog_update_supplier import UpdateSupplierDialog
+        dialog = UpdateSupplierDialog(self, supplier_data)
         if dialog.exec_():
             self.load_suppliers()
