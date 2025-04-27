@@ -1,6 +1,6 @@
 import pandas as pd
 from datetime import datetime
-from db.manager import get_or_create_supplier_id, insert_product
+from db.manager import get_or_create_supplier_id, insert_product, insert_stock_movement
 
 def import_products_from_excel(file_path):
     df = pd.read_excel(file_path)
@@ -15,13 +15,11 @@ def import_products_from_excel(file_path):
         threshold = int(row["Threshold"] or 3)
         description = row["Description"] or ""
         supplier_name = row["Supplier"]
-        # created_at = row["Added at"]
-
-        # if isinstance(created_at, str):
-        #     created_at = datetime.strptime(created_at, "%Y-%m-%d")
-        # elif pd.isna(created_at):
-        #     created_at = datetime.now()
-
+        stock = int(row["Stock"] or 0)
+        
         supplier_id = get_or_create_supplier_id(supplier_name)
-        # insert_product(name, code, category, unit, price, threshold, description, supplier_id, created_at)
-        insert_product(name, category, supplier_id, unit, price, description, threshold)
+        
+        product_id, _ = insert_product(name, category, supplier_id, unit, price, description, threshold)
+        
+        insert_stock_movement(product_id, "IN", "Incoming", "Stock added during import", "Service", stock)
+        

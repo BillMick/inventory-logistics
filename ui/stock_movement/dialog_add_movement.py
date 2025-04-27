@@ -2,7 +2,7 @@ from PyQt5.QtWidgets import (
     QDialog, QVBoxLayout, QFormLayout, QLineEdit, QComboBox,
     QSpinBox, QPushButton, QDialogButtonBox, QMessageBox
 )
-from db.manager import fetch_all_products, insert_stock_movement, fetch_all_clients, insert_client
+from db.manager import fetch_all_products, insert_stock_movement, fetch_all_clients
 
 class AddMovementDialog(QDialog):
     def __init__(self, parent=None):

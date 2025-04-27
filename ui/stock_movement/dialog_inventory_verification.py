@@ -88,21 +88,8 @@ class InventoryVerificationDialog(QDialog):
                 filepath += ".xlsx"
             
             try:
-                # Add date, time as metadata at the top
-                # timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-
-                # Create a DataFrame for the data
                 df = pd.DataFrame(data, columns=["Product", "Theoretical Qty", "Actual Qty", "Discrepancy"])
-
-                # Add the metadata row as the first row of the dataframe
-                # metadata = pd.DataFrame({
-                #     # "Product": ["Generated on:", timestamp],
-                #     "Actual Qty": [""],
-                #     "Discrepancy": [""]
-                # })
                 df = pd.concat([df], ignore_index=True)
-
-                # Write the DataFrame to Excel
                 df.to_excel(filepath, index=False)
                 QMessageBox.information(self, "Export Successful", f"Excel file saved to:\n{filepath}")
             except Exception as e:
