@@ -181,14 +181,15 @@ class ProductDashboard(QWidget):
             desc_item.setTextAlignment(Qt.AlignCenter)
             self.table.setItem(row_idx, 11, desc_item)
 
-            if stock <= threshold:
+            if stock > 0 and stock <= threshold:
                 below_threshold += 1
                 color = QColor(255, 153, 51)  # Orange
-            if stock == 0:
+            elif stock > threshold:
+                color = QColor(153, 255, 153)  # Green
+            elif stock == 0:
+                below_threshold += 1
                 out_of_stock += 1
                 color = QColor(255, 102, 102)  # Red
-            else:
-                color = QColor(153, 255, 153)  # Green
 
             self.table.item(row_idx, 8).setBackground(color)
             
