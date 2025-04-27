@@ -200,7 +200,7 @@ class ClientDashboard(QWidget):
         c.drawCentredString(width / 2, height - 50, "Client Report")
 
         c.setFont("Helvetica", 10)
-        c.drawString(50, height - 70, f"Generated on: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')} by: {self.user['username']}")
+        c.drawString(50, height - 70, f"Generated on: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
 
 
         y = height - 100

@@ -1,7 +1,6 @@
 import logging
 import psycopg2
 from db.config import connection
-from datetime import datetime
 import os
 import psycopg2.extras
 from psycopg2.extras import DictCursor
@@ -139,7 +138,22 @@ def fetch_all_products_with_stock():
         logging.error(f"Error fetching products with stock: {e}")
         return []
 
-
+def get_theoretical_stock(product_id):
+    conn = connection()
+    with conn:
+        with conn.cursor() as cur:
+            cur.execute("""
+                SELECT 
+                    COALESCE(SUM(CASE WHEN sm.type = 'IN' THEN sm.quantity ELSE 0 END), 0) -
+                    COALESCE(SUM(CASE WHEN sm.type = 'OUT' THEN sm.quantity ELSE 0 END), 0) AS stock
+                FROM product p
+                LEFT JOIN stock_movement sm ON p.id = sm.product_id
+                WHERE p.id = %s
+            """, (product_id,))
+            result = cur.fetchone()
+            return result[0] if result else 0
+            
+            
 def update_product_by_id(product_id, name, code, category, unit, price, description, threshold):
     conn = connection()
     with conn:
@@ -236,8 +250,6 @@ def fetch_product_stats():
         "top_products": top_products
     }
 
-from db.config import connection
-
 def fetch_stock_movement_stats():
     query = """
         SELECT
@@ -259,9 +271,6 @@ def fetch_stock_movement_stats():
                     "out": result[2]
                 }
     return {"total": 0, "in": 0, "out": 0}
-
-import psycopg2
-from db.config import connection
 
 
 def fetch_bar_chart_data():

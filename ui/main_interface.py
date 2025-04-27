@@ -19,7 +19,7 @@ class FadeStackedWidget(QStackedWidget):
         super().__init__(parent)
         self._opacity = 1.0
         self._animation = QPropertyAnimation(self, b"opacity")
-        self._animation.setDuration(600)
+        self._animation.setDuration(100)
         self._animation.setEasingCurve(QEasingCurve.InOutQuad)
         self._target_index = None
 
@@ -323,7 +323,7 @@ class MainDashboard(QWidget):
         c.setFont("Helvetica-Bold", 20)
         c.drawCentredString(width / 2, height - 50, "Inventory Dashboard Report")
         c.setFont("Helvetica", 12)
-        c.drawString(50, height - 80, f"Generated on: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')} by: {self.user['username']}")
+        c.drawString(50, height - 80, f"Generated on: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
 
         y_pos = height - 120
 

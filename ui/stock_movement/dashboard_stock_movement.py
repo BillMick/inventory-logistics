@@ -70,6 +70,10 @@ class StockMovementDashboard(QWidget):
         btn_add = QPushButton("Add Movement")
         btn_add.clicked.connect(self.add_movement)
         btn_add.setStyleSheet("background-color: #007bff; color: white;")
+        
+        btn_verify_inventory = QPushButton("Verify Inventory")
+        btn_verify_inventory.clicked.connect(self.open_inventory_verification)
+        btn_verify_inventory.setStyleSheet("background-color: #343a40; color: white;")
 
         btn_quit = QPushButton("Quit")
         btn_quit.setStyleSheet("background-color: #dc3545; color: white;")
@@ -81,6 +85,7 @@ class StockMovementDashboard(QWidget):
         filter_layout.addWidget(self.base_filter)
         filter_layout.addWidget(btn_add)
         filter_layout.addWidget(btn_export)
+        filter_layout.addWidget(btn_verify_inventory)
         filter_layout.addWidget(btn_refresh)
         filter_layout.addWidget(btn_quit)
 
@@ -216,7 +221,7 @@ class StockMovementDashboard(QWidget):
         c.drawCentredString(width / 2, height - 50, "Stock Movement Report")
 
         c.setFont("Helvetica", 10)
-        c.drawString(50, height - 70, f"Generated on: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')} by: {self.user['username']}")
+        c.drawString(50, height - 70, f"Generated on: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
 
         y_pos = height - 100
 
@@ -275,3 +280,7 @@ class StockMovementDashboard(QWidget):
         print(f"Stock movement report saved as {filepath}")
         QMessageBox.information(self, "Export Successful", f"PDF report saved to:\n{filepath}")
         
+    def open_inventory_verification(self):
+        from ui.stock_movement.dialog_inventory_verification import InventoryVerificationDialog
+        dialog = InventoryVerificationDialog(self)
+        dialog.exec_()
