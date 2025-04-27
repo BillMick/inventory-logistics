@@ -469,7 +469,7 @@ def delete_client_by_id(client_id):
     with connection() as conn:
         with conn.cursor() as cur:
             cur.execute("DELETE FROM client WHERE id = %s;", (client_id,))
-            
+
 def insert_client(name, fiscal_id="", contact="", email="", address=""):
     with connection() as conn:
         with conn.cursor() as cur:
