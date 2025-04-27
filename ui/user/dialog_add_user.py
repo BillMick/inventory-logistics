@@ -5,7 +5,7 @@ from PyQt5.QtWidgets import (
     QDialog, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit,
     QPushButton, QCheckBox, QMessageBox
 )
-from db.manager import insert_user  # You'll need to create this function
+from db.manager import insert_user
 from utils.auth import hash_password
 
 class AddUserDialog(QDialog):

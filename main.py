@@ -14,14 +14,3 @@ if __name__ == "__main__":
     else:
         sys.exit(0)
 
-
-# from PyQt5.QtWidgets import QApplication
-# from ui.main_interface import MainDashboard
-# import sys
-
-# if __name__ == "__main__":
-#     app = QApplication(sys.argv)
-#     window = MainDashboard()
-#     window.show()
-#     sys.exit(app.exec_())
-

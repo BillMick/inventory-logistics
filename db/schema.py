@@ -2,6 +2,7 @@ import logging
 from db.config import connection
 import psycopg2
 import os
+from utils.auth import hash_password
 
 # Ensure the logs/ directory exists
 os.makedirs("logs", exist_ok=True)
@@ -17,6 +18,8 @@ logging.basicConfig(
 )
 
 def create_tables():
+    default_password = "admin123"
+    password_hashed = hash_password(default_password)
     queries = [
         """
         CREATE TABLE IF NOT EXISTS users (
@@ -65,6 +68,11 @@ def create_tables():
             comment TEXT,
             timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         );
+        """,
+        f"""
+        INSERT INTO users (username, email, password_hash, is_admin)
+        VALUES ('admin', 'admin@gmail.com', '{password_hashed}', TRUE)
+        ON CONFLICT (username) DO NOTHING;
         """
     ]
 
