@@ -7,7 +7,7 @@ from PyQt5.QtCore import QPropertyAnimation, QEasingCurve, pyqtProperty, Qt
 from PyQt5.QtGui import QFont, QPainter
 from ui.widgets.pie_chart import PieChartWidget
 from ui.widgets.bar_chart import BarChartWidget
-from db.manager import fetch_all_stock_movements, fetch_product_stats
+from db.manager import fetch_all_stock_movements, fetch_product_stats, fetch_all_products_with_stock
 from ui.product.dashboard_product import ProductDashboard
 from ui.stock_movement.dashboard_stock_movement import StockMovementDashboard
 from ui.user.dashboard_user import UserDashboard
@@ -134,11 +134,12 @@ class MainDashboard(QWidget):
         self.total_stock_card = self.create_stat_card("Total Stock", "0", "#20c997")
         self.below_threshold_card = self.create_stat_card("Below Threshold", "0", "#ffc107")
         self.out_of_stock_card = self.create_stat_card("Out of Stock", "0", "#e74c3c")
+        self.value_label = self.create_stat_card("Stock Value", "$0.00", "#6f42c1")
 
         # Add all KPI cards to layout
         cards = [
             self.total_movements_card, self.in_card, self.out_card, self.total_products_card,
-            self.total_stock_card, self.below_threshold_card, self.out_of_stock_card
+            self.total_stock_card, self.below_threshold_card, self.out_of_stock_card, self.value_label
         ]
 
         for i, card in enumerate(cards):
@@ -206,26 +207,46 @@ class MainDashboard(QWidget):
         return frame
 
     def update_dashboard(self):
+        # Fetch data from the database
         movements = fetch_all_stock_movements()
         stats = fetch_product_stats()
+        products = fetch_all_products_with_stock()
+        inventory_value = 0.0
 
+        # Compute movement stats
         in_count = sum(1 for m in movements if m[2] == "IN")
         out_count = sum(1 for m in movements if m[2] == "OUT")
-
         total_movements = len(movements)
-        total_products = stats.get("total_products", 0)
 
-        # Set movement KPIs
-        self.total_movements_card.value_label.setText(str(len(movements)))
+        # Compute product stats with default fallback
+        total_products = stats.get("total_products", 0)
+        total_stock = stats.get("total_stock", 0)
+        below_threshold = stats.get("below_threshold", 0)
+        out_of_stock = stats.get("out_of_stock", 0)
+        top_products = stats.get("top_products", {})
+        
+        for row_idx, product in enumerate(products):
+            stock = product[8]
+            price = float(product[5])
+            inventory_value += stock * price
+
+        # --- Update KPI cards ---
+        self.total_movements_card.value_label.setText(str(total_movements))
         self.in_card.value_label.setText(str(in_count))
         self.out_card.value_label.setText(str(out_count))
 
-        # Set product KPIs
-        self.total_products_card.value_label.setText(str(stats.get("total_products", 0)))
-        self.total_stock_card.value_label.setText(str(stats.get("total_stock", 0)))
-        self.below_threshold_card.value_label.setText(str(stats.get("below_threshold", 0)))
-        self.out_of_stock_card.value_label.setText(str(stats.get("out_of_stock", 0)))
+        self.total_products_card.value_label.setText(str(total_products))
+        self.total_stock_card.value_label.setText(str(total_stock))
+        self.below_threshold_card.value_label.setText(str(below_threshold))
+        self.out_of_stock_card.value_label.setText(str(out_of_stock))
+        self.value_label.value_label.setText(f"${inventory_value:,.2f}")
 
-        # Update charts
-        self.movement_chart.plot({"IN": in_count, "OUT": out_count}, "Stock Movement Distribution")
-        self.top_products_chart.plot(stats.get("top_products", {}), "Top Products")
+        # --- Update charts ---
+        self.movement_chart.plot(
+            {"IN": in_count, "OUT": out_count},
+            "Stock Movement Distribution"
+        )
+        self.top_products_chart.plot(
+            top_products,
+            "Top Products"
+        )

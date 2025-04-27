@@ -3,6 +3,8 @@ import psycopg2
 from db.config import connection
 from datetime import datetime
 import os
+from psycopg2.extras import DictCursor
+
 
 # Ensure logs directory exists
 os.makedirs("logs", exist_ok=True)
@@ -171,38 +173,53 @@ def fetch_all_stock_movements():
         """)
         return cur.fetchall()
 
-from db.config import connection
-from collections import defaultdict
-
 def fetch_product_stats():
-    result = {
-        "total_products": 0,
-        "top_products": {}
+    conn = connection()
+
+    cur = conn.cursor(cursor_factory=DictCursor)
+
+    # Total products
+    cur.execute("SELECT COUNT(*) FROM product")
+    total_products = cur.fetchone()[0]
+
+    # Current stock per product (product_id -> stock)
+    cur.execute("""
+        SELECT p.id, p.name, p.threshold, 
+               COALESCE(SUM(CASE sm.type WHEN 'IN' THEN sm.quantity ELSE -sm.quantity END), 0) AS stock
+        FROM product p
+        LEFT JOIN stock_movement sm ON p.id = sm.product_id
+        GROUP BY p.id
+    """)
+    rows = cur.fetchall()
+
+    total_stock = 0
+    below_threshold = 0
+    out_of_stock = 0
+    stock_by_product = {}
+
+    for row in rows:
+        stock = row['stock']
+        total_stock += stock
+        stock_by_product[row['name']] = stock
+
+        if stock == 0:
+            out_of_stock += 1
+        if stock < row['threshold']:
+            below_threshold += 1
+
+    # Top 5 products by stock
+    top_products = dict(sorted(stock_by_product.items(), key=lambda x: x[1], reverse=True)[:5])
+
+    cur.close()
+    conn.close()
+
+    return {
+        "total_products": total_products,
+        "total_stock": total_stock,
+        "below_threshold": below_threshold,
+        "out_of_stock": out_of_stock,
+        "top_products": top_products
     }
-
-    try:
-        conn = connection()
-        with conn.cursor() as cur:
-            # Total number of products
-            cur.execute("SELECT COUNT(*) FROM product;")
-            result["total_products"] = cur.fetchone()[0]
-
-            # Top products by total stock movement
-            cur.execute("""
-                SELECT p.name, SUM(sm.quantity) AS total_quantity
-                FROM stock_movement sm
-                JOIN product p ON sm.product_id = p.id
-                GROUP BY p.name
-                ORDER BY total_quantity DESC
-                LIMIT 10;
-            """)
-            top_data = cur.fetchall()
-            result["top_products"] = {row[0]: row[1] for row in top_data}
-
-        return result
-    except Exception as e:
-        print("Error fetching product stats:", e)
-        return result
 
 from db.config import connection
 
@@ -386,3 +403,9 @@ def get_or_create_supplier_id(name):
     finally:
         cursor.close()
         conn.close()
+
+def delete_user_by_id(user_id):
+    conn = connection()
+    with conn.cursor() as cur:
+        cur.execute("DELETE FROM users WHERE id = %s", (user_id,))
+        conn.commit()

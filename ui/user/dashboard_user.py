@@ -1,11 +1,13 @@
 from PyQt5.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QTableWidget,
     QTableWidgetItem, QComboBox, QLabel, QFrame, QSizePolicy, QLineEdit,
-    QHeaderView
+    QHeaderView, QMessageBox
 )
 from PyQt5.QtGui import QFont
 from PyQt5.QtCore import Qt
 from db.manager import fetch_all_users
+from functools import partial
+from db.manager import delete_user_by_id
 
 
 class UserDashboard(QWidget):
@@ -66,8 +68,8 @@ class UserDashboard(QWidget):
 
         # --- Table Section ---
         self.table = QTableWidget()
-        self.table.setColumnCount(5)
-        self.table.setHorizontalHeaderLabels(["ID", "Username", "Email", "Role","Created At"])
+        self.table.setColumnCount(6)
+        self.table.setHorizontalHeaderLabels(["ID", "Username", "Email", "Role","Created At", "Action"])
         self.table.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         self.table.setSortingEnabled(True)
         self.table.horizontalHeader().setStretchLastSection(True)
@@ -137,6 +139,12 @@ class UserDashboard(QWidget):
                 self.table.setItem(row, 3, QTableWidgetItem("Admin" if is_admin else "Not admin"))
                 self.table.setItem(row, 4, QTableWidgetItem(str(created_at)))
 
+                # Add Delete button in Action column
+                btn_delete = QPushButton("Delete")
+                btn_delete.setStyleSheet("background-color: #dc3545; color: white; font-weight: bold;")
+                btn_delete.clicked.connect(partial(self.delete_user, user_id=user_id))
+                self.table.setCellWidget(row, 5, btn_delete)
+
                 total_users += 1
                 if is_admin:
                     admins_count += 1
@@ -145,7 +153,22 @@ class UserDashboard(QWidget):
         self.total_users.value_label.setText(str(total_users))
         self.admins.value_label.setText(str(admins_count))
         self.last_user.value_label.setText(last_user)
-
+        
+    def delete_user(self, user_id):
+        confirm = QMessageBox.question(
+            self,
+            "Confirm Delete",
+            "Are you sure you want to delete this user?",
+            QMessageBox.Yes | QMessageBox.No
+        )
+        if confirm == QMessageBox.Yes:
+            try:
+                from db.manager import delete_user_by_id
+                delete_user_by_id(user_id)
+                QMessageBox.information(self, "Deleted", "User deleted successfully.")
+                self.load_users()
+            except Exception as e:
+                QMessageBox.critical(self, "Error", f"Failed to delete user:\n{str(e)}")
 
     def add_user(self):
         from ui.user.dialog_add_user import AddUserDialog

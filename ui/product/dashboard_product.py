@@ -27,11 +27,13 @@ class ProductDashboard(QWidget):
         self.stock_label = self.create_stat_card("Total Stock", "0", "#28a745")
         self.below_label = self.create_stat_card("Below Threshold", "0", "#ffc107")
         self.out_label = self.create_stat_card("Out of Stock", "0", "#dc3545")
+        self.value_label = self.create_stat_card("Stock Value", "$0.00", "#6f42c1")
 
         self.kpi_layout.addWidget(self.total_label)
         self.kpi_layout.addWidget(self.stock_label)
         self.kpi_layout.addWidget(self.below_label)
         self.kpi_layout.addWidget(self.out_label)
+        self.kpi_layout.addWidget(self.value_label)
 
         layout.addLayout(self.kpi_layout)
         layout.addWidget(self.horizontal_line())
@@ -72,8 +74,9 @@ class ProductDashboard(QWidget):
         # --- Table Section ---
         self.table = QTableWidget()
         self.table.setColumnCount(11)
+        self.table.setColumnCount(12)  # was 11
         self.table.setHorizontalHeaderLabels([
-            "ID", "Name", "Code", "Category", "Unit", "Price", "Supplier", "Threshold", "Stock", "Added at", "Description"
+            "ID", "Name", "Code", "Category", "Unit", "Price", "Supplier", "Threshold", "Stock", "Total Value", "Added at", "Description"
         ])
         self.table.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         self.table.setSortingEnabled(True)
@@ -119,6 +122,7 @@ class ProductDashboard(QWidget):
         return line
 
     def load_products(self):
+        inventory_value = 0.0
         self.table.setRowCount(0)
         products = fetch_all_products_with_stock()
         # print(products)
@@ -145,6 +149,22 @@ class ProductDashboard(QWidget):
             stock = product[8]
             threshold = product[7]
             total_stock += stock
+            price = float(product[5])
+            total_value = stock * price
+            
+            # Insert total value in column 9 (after Stock)
+            total_item = QTableWidgetItem(f"${total_value:,.2f}")
+            total_item.setTextAlignment(Qt.AlignCenter)
+            self.table.setItem(row_idx, 9, total_item)
+
+            # Shift "Added at" and "Description" to next columns
+            added_item = QTableWidgetItem(str(product[9]))
+            added_item.setTextAlignment(Qt.AlignCenter)
+            self.table.setItem(row_idx, 10, added_item)
+
+            desc_item = QTableWidgetItem(str(product[10]))
+            desc_item.setTextAlignment(Qt.AlignCenter)
+            self.table.setItem(row_idx, 11, desc_item)
 
             if stock <= threshold:
                 below_threshold += 1
@@ -156,12 +176,16 @@ class ProductDashboard(QWidget):
                 color = QColor(153, 255, 153)  # Green
 
             self.table.item(row_idx, 8).setBackground(color)
+            
+            inventory_value += stock * price
 
         # --- Update KPI cards ---
         self.total_label.value_label.setText(str(len(filtered_products)))
         self.stock_label.value_label.setText(str(total_stock))
         self.below_label.value_label.setText(str(below_threshold))
         self.out_label.value_label.setText(str(out_of_stock))
+        self.value_label.value_label.setText(f"${inventory_value:,.2f}")
+
 
     def import_products(self):
         path, _ = QFileDialog.getOpenFileName(self, "Select Excel File", "", "Excel Files (*.xlsx *.xls)")
