@@ -58,13 +58,19 @@ class FadeStackedWidget(QStackedWidget):
 
 
 class MainDashboard(QWidget):
-    def __init__(self):
+    def __init__(self, user):
         super().__init__()
-        self.setWindowTitle("Main Inventory Dashboard")
+        self.user = user  # Save the user info
+        self.setWindowTitle(f"Main Inventory Dashboard - Logged in as {self.user['username']}")
         self.showMaximized()
 
         main_layout = QVBoxLayout()
         main_layout.setSpacing(15)
+        
+        user_label = QLabel(f"Logged in as: {self.user['username']}")
+        user_label.setAlignment(Qt.AlignRight)
+        user_label.setStyleSheet("color: #6c757d; font-style: italic;")
+        main_layout.addWidget(user_label)
 
         # --- Menu Bar ---
         icons = {
@@ -77,6 +83,8 @@ class MainDashboard(QWidget):
 
         menu_layout = QHBoxLayout()
         for i, name in enumerate(["Dashboard", "Movements", "Products", "Users", "Suppliers"]):
+            if name == "Users" and not self.user.get("is_admin"):
+                continue
             btn = QPushButton(icons[name], name)
             btn.setStyleSheet("""
                 QPushButton {
@@ -166,7 +174,10 @@ class MainDashboard(QWidget):
         self.stack.addWidget(self.dashboard_page)            # index 0
         self.stack.addWidget(StockMovementDashboard())       # index 1
         self.stack.addWidget(ProductDashboard())             # index 2
-        self.stack.addWidget(UserDashboard())                # index 3
+        if self.user.get("is_admin"):
+            self.stack.addWidget(UserDashboard())            # index 3
+        else:
+            self.stack.addWidget(QWidget())
         self.stack.addWidget(SupplierDashboard())            # index 4
 
         main_layout.addWidget(self.stack)
