@@ -448,3 +448,32 @@ def get_user_by_email(email):
     cur.close()
     conn.close()
     return dict(user) if user else None
+
+
+def fetch_all_clients():
+    with connection() as conn:
+        with conn.cursor() as cur:
+            cur.execute("SELECT * FROM client ORDER BY created_at DESC;")
+            return cur.fetchall()
+
+def delete_client_by_id(client_id):
+    with connection() as conn:
+        with conn.cursor() as cur:
+            cur.execute("DELETE FROM client WHERE id = %s;", (client_id,))
+            
+def insert_client(name, fiscal_id, contact, email, address):
+    with connection() as conn:
+        with conn.cursor() as cur:
+            cur.execute("""
+                INSERT INTO client (name, fiscal_id, contact, email, address)
+                VALUES (%s, %s, %s, %s, %s)
+            """, (name, fiscal_id, contact, email, address))
+
+def update_client(client_id, name, fiscal_id, contact, email, address):
+    with connection() as conn:
+        with conn.cursor() as cur:
+            cur.execute("""
+                UPDATE client
+                SET name = %s, fiscal_id = %s, contact = %s, email = %s, address = %s
+                WHERE id = %s
+            """, (name, fiscal_id, contact, email, address, client_id))

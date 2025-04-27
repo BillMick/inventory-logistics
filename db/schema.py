@@ -73,6 +73,17 @@ def create_tables():
         INSERT INTO users (username, email, password_hash, is_admin)
         VALUES ('admin', 'admin@gmail.com', '{password_hashed}', TRUE)
         ON CONFLICT (username) DO NOTHING;
+        """,
+        """
+        CREATE TABLE IF NOT EXISTS client (
+        id SERIAL PRIMARY KEY,
+        name TEXT NOT NULL,
+        fiscal_id TEXT UNIQUE,
+        contact TEXT,
+        email TEXT,
+        address TEXT,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        );
         """
     ]
 

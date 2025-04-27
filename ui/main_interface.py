@@ -12,6 +12,7 @@ from ui.product.dashboard_product import ProductDashboard
 from ui.stock_movement.dashboard_stock_movement import StockMovementDashboard
 from ui.user.dashboard_user import UserDashboard
 from ui.supplier.dashboard_supplier import SupplierDashboard
+from ui.client.dashboard_client import CustomerDashboard
 
 class FadeStackedWidget(QStackedWidget):
     def __init__(self, parent=None):
@@ -79,10 +80,11 @@ class MainDashboard(QWidget):
             "Products": self.style().standardIcon(QStyle.SP_DirIcon),
             "Users": self.style().standardIcon(QStyle.SP_FileDialogDetailedView),
             "Suppliers": self.style().standardIcon(QStyle.SP_DriveNetIcon),
+            "Customers": self.style().standardIcon(QStyle.SP_DirHomeIcon),
         }
 
         menu_layout = QHBoxLayout()
-        for i, name in enumerate(["Dashboard", "Movements", "Products", "Users", "Suppliers"]):
+        for i, name in enumerate(["Dashboard", "Movements", "Products", "Users", "Suppliers", "Customers"]):
             if name == "Users" and not self.user.get("is_admin"):
                 continue
             btn = QPushButton(icons[name], name)
@@ -110,6 +112,8 @@ class MainDashboard(QWidget):
                 btn.clicked.connect(lambda _, idx=3: self.stack.fadeToIndex(idx))
             elif name == "Suppliers":
                 btn.clicked.connect(lambda _, idx=4: self.stack.fadeToIndex(idx))
+            elif name == "Customers":
+                btn.clicked.connect(lambda _, idx=5: self.stack.fadeToIndex(idx))
                 
             menu_layout.addWidget(btn)
 
@@ -179,6 +183,7 @@ class MainDashboard(QWidget):
         else:
             self.stack.addWidget(QWidget())
         self.stack.addWidget(SupplierDashboard())            # index 4
+        self.stack.addWidget(CustomerDashboard())            # index 4
 
         main_layout.addWidget(self.stack)
         self.setLayout(main_layout)
