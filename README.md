@@ -34,3 +34,8 @@ To install the dependancies, refer to the `requirements.txt` file. You can run:
 pip install -r requirements.txt --break-system-packages
 ```
 Or create a virtual environnement for your app and run the same command without `--break-system-packages`.
+
+Eventually to load the psql service:
+```bash
+sudo systemctl start postgresql@17-main
+```
