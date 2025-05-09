@@ -71,4 +71,4 @@ The credentials are:
 ![Stock control interface](images/verification.png "Stock control interface.")
 ![Suppliers interface](images/suppliers.png "Suppliers management interface.")
 ![Clients interface](images/clients.png "Clients management interface.")
-![Users interface (when admin)](images/users.png "Users management interface.")
+![Users interface (if admin)](images/users.png "Users management interface.")
