@@ -32,7 +32,7 @@ class AddUserDialog(QDialog):
         self.password_input = QLineEdit()
         self.password_input.setPlaceholderText("Enter mot de passe")
         self.password_input.setEchoMode(QLineEdit.Password)
-        layout.addWidget(QLabel("Password:"))
+        layout.addWidget(QLabel("Mot de passe:"))
         layout.addWidget(self.password_input)
 
         # --- Is Admin ---

@@ -1,74 +1,73 @@
 # inventory-logistics
-Python based app to manage inventory and logistics
+Application Python pour gérer les stocks et la logistique
 
-# Before test
+# Avant le test
 ## Structure
-The project is module-based.
-- The __db/__ folder contains files for connection, schema and data management.
-- The __ui/__ folder contains subfolders for each modules (_product_, _movement_, _supplier_, _client_, _user_) and main dashboard code (_main\_interface.py_). Each python file contains the appropriate GUI code.
-- The __utils/__ folder contains some helpers.
-- The __*.xlsx__ files contains data that can be used to test __Import from Excel__ functionalities.
-- The __main.py__ file is the main module to execute.
-- The __first\_usage.py__ file serves to create tables in database if not exist.
+Le projet est basé sur une architecture modulaire.
+- Le dossier __db/__ contient les fichiers de connexion, de schéma et de gestion des données.
+- Le dossier __ui/__ contient des sous-dossiers pour chaque module (_product_, _movement_, _supplier_, _client_, _user_) ainsi que le code du tableau de bord principal (_main_interface.py_). Chaque fichier Python contient le code de l’interface graphique correspondant.
+- Le dossier __utils/__ contient des fonctions utilitaires.
+- Les fichiers __*.xlsx__ contiennent des données pouvant être utilisées pour tester les fonctionnalités d’__importation depuis Excel__.
+- Le fichier __main.py__ est le module principal à exécuter.
+- Le fichier __first_usage.py__ sert à créer les tables dans la base de données si elles n’existent pas.
 
-## Database settings
-For this app, we use __postgreSQL__. 
-1. So ensure to have it installed at your convenience (with or not GUI) according to your OS.
-2. Create the database __inventory_logistics__.
-    - If you are using terminal on linux OS (debian for example):
-        - connect to your Postgres:
+## Paramètres de base de données
+Cette application utilise __PostgreSQL__.
+1. Assurez-vous qu’il est installé sur votre machine, avec ou sans interface graphique, selon votre système d’exploitation.
+2. Créez la base de données __inventory_logistics__.
+    - Si vous utilisez un terminal sous Linux (par exemple Debian) :
+        - Connectez-vous à PostgreSQL :
         ```bash
         psql -U postgres -h 127.0.0.1
         ```
-        - Create your database:
+        - Créez votre base de données :
         ```bash
         CREATE DATABASE inventory_logistics;
         ```
-        - Verify the existence of your database:
+        - Vérifiez son existence :
         ```bash
         \l;
         ```
-        > If all has gone well, you should see in the list your new database.
-    - If you are using windows OS with GUI like PgAdmin, you can launch your GUI and create graphically your database.
-3. In the file __db/config.py__, update the database connexion info in the function _connect_db()_:
+        > Si tout s’est bien passé, vous devriez voir votre nouvelle base dans la liste.
+    - Si vous utilisez Windows avec une interface graphique comme PgAdmin, vous pouvez créer la base de données graphiquement.
+
+3. Dans le fichier __db/config.py__, mettez à jour les informations de connexion à la base de données dans la fonction _connect_db()_ :
 ```python
 conn = psycopg2.connect(
-    dbname="database_name", # ex.:inventory_logistics
-    user="username", # ex.: postgres
-    password="password", 
+    dbname="nom_de_la_base",  # ex. : inventory_logistics
+    user="nom_utilisateur",   # ex. : postgres
+    password="mot_de_passe",
     host="localhost",
-    port="port" # ex.: 5432
+    port="port"               # ex. : 5432
 )
 ```
+Cliquez ici pour lire des ressources utiles sur PostgreSQL.
 
-> Click [here](https://www.tutorialspoint.com/postgresql/index.htm) to read some useful PostgreSQL overviews.
-
-4. Run the `first_usage.py` file to create tables:
+4. Exécutez le fichier first_usage.py pour créer les tables :
 ```bash
 python3 first_usage.py
 ```
 
-## Python dependancies
-To install the dependancies, refer to the `requirements.txt` file. You can run:
+## Dépendances Python
+Pour installer les dépendances, référez-vous au fichier `requirements.txt`. Vous pouvez exécuter :
 ```bash
 pip install -r requirements.txt --break-system-packages
 ```
-Or create a virtual environnement for your app and run the same command without `--break-system-packages`.
+Ou bien créer un environnement virtuel pour votre application et exécuter la même commande sans __--break-system-packages__.
 
-# Testing
-## Login
-To test the app, run the file `./main.py`. You will see the following login interface:
-![Login interface](images/login.png "Login interface.")
-There is a default admin profile saved in your database when you executed the `first_usage.py` module.
-The credentials are:
-- __Email:__ admin@gmail.com
-- __Password:__ admin123
+# Tests
+## Connexion
+Pour tester l’application, exécutez le fichier `./main.py`. Vous verrez l’interface de connexion suivante :
+![Login](images/login.png "Interface de Login.")
+Un profil administrateur par défaut est enregistré dans la base de données lorsque vous avez exécuté le module first_usage.py. Les identifiants sont :
+__Email:__ admin@gmail.com
+__Mot de passe:__ admin123
 
-## What you will see then (without data):
-![Dashboard](images/main.png "Main interface.")
-![Products interface](images/products.png "Products management interface.")
-![Stock Movements interface](images/movements.png "Stock movements management interface.")
-![Stock control interface](images/verification.png "Stock control interface.")
-![Suppliers interface](images/suppliers.png "Suppliers management interface.")
-![Clients interface](images/clients.png "Clients management interface.")
-![Users interface (when admin)](images/users.png "Users management interface.")
+## Ce que vous verrez ensuite (sans données) :
+![Interface principale](images/main.png "Interface principale.")
+![Interface de Gestion des produits](images/products.png "Interface de Gestion des produits.")
+![Interface de gestion des mouvements de stock](images/movements.png "Interface de gestion des mouvements de stock.")
+![Interface de contrôle de stock](images/verification.png "Interface de contrôle de stock.")
+![Interface de gestion des fournisseurs](images/suppliers.png "Interface de gestion des fournisseurs.")
+![Interface de gestion des clients](images/clients.png "Interface de gestion des clients.")
+![Interface de gestion des utilisateurs (si admin)](images/users.png "Interface de gestion des utilisateurs.")
