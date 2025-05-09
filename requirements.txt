@@ -3,3 +3,4 @@ pandas
 openpyxl
 bcrypt
 reportlab
+psycopg2
